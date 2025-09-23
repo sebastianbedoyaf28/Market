@@ -51,4 +51,15 @@ export class LoginPage {
     if (error) { this.error = error.message; return; }
     alert('Revisa tu correo para continuar.');
   }
+
+  ngOnInit() {
+  const hash = window.location.hash; // p. ej. #error=access_denied&error_code=otp_expired...
+  if (hash.includes('otp_expired') || hash.includes('invalid')) {
+    this.error = 'El enlace de acceso ya no es válido. Solicita uno nuevo.';
+    // Limpia el hash para que no quede el error pegado al refrescar:
+    history.replaceState(null, '', window.location.pathname);
+  }
+}
+
+
 }
