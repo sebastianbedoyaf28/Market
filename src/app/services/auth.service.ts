@@ -27,7 +27,16 @@ export class AuthService {
   }
 
   signInMagic(email: string) {
-    return supabase().auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin } });
+    return supabase().auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: window.location.origin + '/login' },
+    });
+  }
+
+  resetPassword(email: string) {
+    return supabase().auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + '/login',
+    });
   }
 
   signOut() {

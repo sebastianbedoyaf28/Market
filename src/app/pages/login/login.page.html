@@ -1,22 +1,100 @@
-<ion-header>
-  <ion-toolbar>
-    <ion-title>Acceder</ion-title>
-  </ion-toolbar>
-</ion-header>
+<ion-content class="login-content">
+  <!-- Header con título -->
+  <div class="header">
+    <h1 class="title">Acceder</h1>
+  </div>
 
-<ion-content class="ion-padding">
-  <form [formGroup]="form" (ngSubmit)="emailPasswordSignIn()">
-    <ion-item>
-      <ion-label position="stacked">Email</ion-label>
-      <ion-input type="email" formControlName="email"></ion-input>
-    </ion-item>
-    <ion-item>
-      <ion-label position="stacked">Contraseña</ion-label>
-      <ion-input type="password" formControlName="password"></ion-input>
-    </ion-item>
-    <ion-button expand="block" class="ion-margin-top" [disabled]="loading" type="submit">Ingresar</ion-button>
-    <ion-button expand="block" fill="outline" [disabled]="loading" (click)="emailPasswordSignUp()">Crear cuenta</ion-button>
-    <ion-button expand="block" fill="clear" [disabled]="loading" (click)="magicLink()">Usar enlace mágico</ion-button>
-    <ion-text color="danger" *ngIf="error">{{ error }}</ion-text>
-  </form>
+  <!-- Formulario centrado -->
+  <div class="form-container">
+    <form [formGroup]="form" (ngSubmit)="emailPasswordSignIn()" class="login-form">
+      
+      <!-- Campo Email -->
+      <div class="input-group">
+        <label class="input-label">Email</label>
+        <ion-input 
+          type="email" 
+          formControlName="email" 
+          inputmode="email" 
+          autocomplete="email"
+          class="custom-input"
+          placeholder="tu@email.com">
+        </ion-input>
+        <ion-note color="danger" *ngIf="form.get('email')?.touched && form.get('email')?.invalid" class="error-message">
+          Email inválido
+        </ion-note>
+      </div>
+
+      <!-- Campo Contraseña -->
+      <div class="input-group">
+        <label class="input-label">Contraseña</label>
+        <ion-input 
+          [type]="showPass() ? 'text' : 'password'" 
+          formControlName="password" 
+          autocomplete="current-password"
+          class="custom-input"
+          placeholder="••••••••">
+        </ion-input>
+        
+        <!-- Checkbox para mostrar contraseña -->
+        <div class="show-password-checkbox">
+          <ion-checkbox 
+            [checked]="showPass()" 
+            (ionChange)="showPass.set($event.detail.checked)"
+            class="password-checkbox">
+          </ion-checkbox>
+          <label class="checkbox-label" (click)="showPass.set(!showPass())">
+            Mostrar contraseña
+          </label>
+        </div>
+        
+        <ion-note color="danger" *ngIf="form.get('password')?.touched && form.get('password')?.hasError('minlength')" class="error-message">
+          Mínimo 8 caracteres
+        </ion-note>
+      </div>
+
+      <!-- Botón principal -->
+      <ion-button 
+        expand="block" 
+        class="primary-btn" 
+        [disabled]="loading || form.invalid" 
+        type="submit">
+        <ion-spinner *ngIf="loading" name="crescent" class="btn-spinner"></ion-spinner>
+        {{ loading ? 'Ingresando…' : 'INGRESAR' }}
+      </ion-button>
+    </form>
+
+    <!-- Botones secundarios -->
+    <div class="secondary-buttons">
+      <ion-button 
+        expand="block" 
+        fill="outline" 
+        class="outline-btn"
+        [disabled]="loading || form.invalid" 
+        (click)="emailPasswordSignUp()">
+        CREAR CUENTA
+      </ion-button>
+
+      <ion-button 
+        expand="block" 
+        fill="clear" 
+        class="clear-btn"
+        [disabled]="loading" 
+        (click)="magicLink()">
+        USAR ENLACE MÁGICO
+      </ion-button>
+    </div>
+
+    <!-- Enlace de recuperación -->
+    <div class="forgot-password">
+      <button class="forgot-link" (click)="resetPass()">
+        ¿Olvidaste tu contraseña?
+      </button>
+    </div>
+
+    <!-- Mensajes de estado -->
+    <div class="messages">
+      <ion-text color="danger" *ngIf="error" class="error-text">{{ error }}</ion-text>
+      <ion-text color="success" *ngIf="info" class="success-text">{{ info }}</ion-text>
+    </div>
+  </div>
 </ion-content>
