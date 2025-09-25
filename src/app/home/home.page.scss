@@ -1,27 +1,311 @@
-#container {
+// Variables de color
+$primary-color: #007bff;
+$secondary-color: #6c757d;
+$dark-bg: #1a1a1a;
+$card-bg: #2d2d2d;
+$text-light: #ffffff;
+$text-muted: #adb5bd;
+$success-color: #28a745;
+$danger-color: #dc3545;
+$warning-color: #ffc107;
+$info-color: #17a2b8;
+
+// Contenido principal
+.dashboard-content {
+  --background: #{$dark-bg};
+  --color: #{$text-light};
+}
+
+// Header del dashboard
+.dashboard-header {
+  padding: 2rem 1.5rem 1.5rem;
   text-align: center;
+  background: linear-gradient(135deg, #{$primary-color}20, #{$dark-bg});
+  border-radius: 0 0 2rem 2rem;
+  margin-bottom: 1.5rem;
 
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  .dashboard-title {
+    color: #{$text-light};
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem;
+    letter-spacing: -0.02em;
+  }
+
+  .dashboard-subtitle {
+    color: #{$text-muted};
+    font-size: 1.1rem;
+    margin: 0 0 1rem;
+    font-weight: 400;
+  }
+
+  .user-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: #{$text-muted};
+    font-size: 0.9rem;
+
+    ion-icon {
+      font-size: 1.2rem;
+    }
+  }
 }
 
-#container strong {
-  font-size: 20px;
-  line-height: 26px;
+// Grid de métricas
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  padding: 0 1.5rem;
+  margin-bottom: 2rem;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 
-#container p {
-  font-size: 16px;
-  line-height: 22px;
+.metric-card {
+  background: #{$card-bg};
+  border-radius: 12px;
+  padding: 1.5rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
 
-  color: #8c8c8c;
+  &:hover {
+    transform: translateY(-2px);
+    border-color: #{$primary-color}40;
+    box-shadow: 0 8px 25px rgba(0, 123, 255, 0.15);
+  }
 
-  margin: 0;
+  .metric-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+
+    &.inventory {
+      background: linear-gradient(135deg, #{$primary-color}, #{$info-color});
+      color: #{$text-light};
+    }
+
+    &.orders {
+      background: linear-gradient(135deg, #{$warning-color}, #{$secondary-color});
+      color: #{$text-light};
+    }
+
+    &.sales {
+      background: linear-gradient(135deg, #{$success-color}, #{$primary-color});
+      color: #{$text-light};
+    }
+
+    &.alerts {
+      background: linear-gradient(135deg, #{$danger-color}, #{$warning-color});
+      color: #{$text-light};
+    }
+  }
+
+  .metric-info {
+    flex: 1;
+
+    h3 {
+      color: #{$text-muted};
+      font-size: 0.8rem;
+      font-weight: 500;
+      margin: 0 0 0.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .metric-value {
+      color: #{$text-light};
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0 0 0.25rem;
+    }
+
+    .metric-label {
+      color: #{$text-muted};
+      font-size: 0.7rem;
+      margin: 0;
+    }
+  }
 }
 
-#container a {
-  text-decoration: none;
+// Sección de módulos
+.modules-section {
+  padding: 0 1.5rem 2rem;
+
+  .section-title {
+    color: #{$text-light};
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0 0 1.5rem;
+    text-align: center;
+  }
+}
+
+.modules-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+.module-card {
+  background: #{$card-bg};
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+  overflow: hidden;
+
+  &:hover {
+    transform: translateY(-4px);
+    border-color: #{$primary-color}40;
+    box-shadow: 0 12px 30px rgba(0, 123, 255, 0.2);
+  }
+
+  ion-card-header {
+    padding: 1rem;
+    text-align: center;
+
+    ion-card-title {
+      color: #{$text-light};
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    ion-card-subtitle {
+      color: #{$text-muted};
+      font-size: 0.8rem;
+    }
+  }
+}
+
+.module-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 1rem auto;
+  font-size: 1.8rem;
+
+  &.inventory {
+    background: linear-gradient(135deg, #{$primary-color}, #{$info-color});
+    color: #{$text-light};
+  }
+
+  &.orders {
+    background: linear-gradient(135deg, #{$warning-color}, #{$secondary-color});
+    color: #{$text-light};
+  }
+
+  &.sales {
+    background: linear-gradient(135deg, #{$success-color}, #{$primary-color});
+    color: #{$text-light};
+  }
+
+  &.reports {
+    background: linear-gradient(135deg, #{$info-color}, #{$primary-color});
+    color: #{$text-light};
+  }
+
+  &.users {
+    background: linear-gradient(135deg, #{$secondary-color}, #{$primary-color});
+    color: #{$text-light};
+  }
+
+  &.alerts {
+    background: linear-gradient(135deg, #{$danger-color}, #{$warning-color});
+    color: #{$text-light};
+  }
+}
+
+// Actividad reciente
+.recent-activity {
+  padding: 0 1.5rem 2rem;
+
+  .section-title {
+    color: #{$text-light};
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0 0 1.5rem;
+    text-align: center;
+  }
+
+  ion-list {
+    background: transparent;
+
+    ion-item {
+      --background: #{$card-bg};
+      --color: #{$text-light};
+      --border-color: transparent;
+      margin-bottom: 0.5rem;
+      border-radius: 8px;
+
+      ion-label {
+        h3 {
+          color: #{$text-light};
+          font-size: 0.9rem;
+          font-weight: 600;
+          margin-bottom: 0.25rem;
+        }
+
+        p {
+          color: #{$text-muted};
+          font-size: 0.8rem;
+          margin: 0;
+        }
+      }
+
+      ion-note {
+        color: #{$text-muted};
+        font-size: 0.8rem;
+      }
+    }
+  }
+}
+
+// Responsive
+@media (min-width: 768px) {
+  .dashboard-header {
+    padding: 3rem 2rem 2rem;
+    margin-bottom: 2rem;
+
+    .dashboard-title {
+      font-size: 2.8rem;
+    }
+
+    .dashboard-subtitle {
+      font-size: 1.3rem;
+    }
+  }
+
+  .modules-section {
+    padding: 0 2rem 3rem;
+  }
+
+  .recent-activity {
+    padding: 0 2rem 3rem;
+  }
+}
+
+// Animaciones suaves
+* {
+  transition: all 0.3s ease;
 }
