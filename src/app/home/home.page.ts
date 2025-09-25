@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, ToastController, MenuController } from '@ionic/angular';
 import { Router } from '@angular/router';
@@ -25,7 +25,7 @@ export class HomePage implements OnInit {
   products$!: Observable<Product[]>;
   loading = false;
   
-  // Métricas del dashboard
+  // MÃ©tricas del dashboard
   totalProducts = 0;
   pendingOrders = 3;
   todaySales = 1250.50;
@@ -57,7 +57,7 @@ export class HomePage implements OnInit {
     {
       icon: 'warning-outline',
       title: 'Stock bajo',
-      description: 'Producto "Leche" por debajo del mínimo',
+      description: 'Producto "Leche" por debajo del mÃ­nimo',
       time: '2 horas',
       color: 'warning'
     }
@@ -93,42 +93,25 @@ export class HomePage implements OnInit {
   }
 
   navigateToModule(module: string) {
-    // Navegación a módulos implementados
-    switch (module) {
-      case 'inventory':
-        this.router.navigateByUrl('/inventory');
-        break;
-      case 'orders':
-        this.showToast('Módulo de pedidos próximamente', 'primary');
-        break;
-      case 'sales':
-        this.showToast('Módulo de ventas próximamente', 'primary');
-        break;
-      case 'reports':
-        this.showToast('Módulo de reportes próximamente', 'primary');
-        break;
-      case 'users':
-        this.showToast('Módulo de usuarios próximamente', 'primary');
-        break;
-      case 'alerts':
-        this.showToast('Panel de alertas próximamente', 'primary');
-        break;
-      default:
-        this.showToast(`Navegando a ${module}`, 'primary');
+    if (module === 'inventory') {
+      this.router.navigateByUrl('/inventory');
+      return;
     }
+
+    this.showToast('Navegando a ' + module, 'primary');
   }
 
   async logout() {
     this.loading = true;
     const { error } = await this.auth.signOut();
     this.loading = false;
-    
+
     if (error) {
-      await this.showToast('Error al cerrar sesión', 'danger');
+      await this.showToast('Error al cerrar sesion', 'danger');
       return;
     }
-    
-    await this.showToast('Sesión cerrada', 'success');
+
+    await this.showToast('Sesion cerrada', 'success');
     this.router.navigateByUrl('/login', { replaceUrl: true });
   }
 
@@ -142,3 +125,9 @@ export class HomePage implements OnInit {
     await toast.present();
   }
 }
+
+
+
+
+
+

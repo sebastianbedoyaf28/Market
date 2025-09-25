@@ -1,0 +1,191 @@
+﻿<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/inventory"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Detalle de producto</ion-title>
+    <ion-buttons slot="end">
+      <ion-button color="medium" (click)="goToEdition()">
+        <ion-icon name="create-outline" slot="start"></ion-icon>
+        Editar
+      </ion-button>
+      <ion-button color="danger" (click)="deleteProduct()">
+        <ion-icon name="trash-outline" slot="start"></ion-icon>
+        Eliminar
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ng-container *ngIf="product$ | async as product">
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>{{ product.name }}</ion-card-title>
+        <ion-card-subtitle>SKU: {{ product.sku }}</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        <div class="details">
+          <div>
+            <strong>Categoria:</strong>
+            <span>{{ product.category }}</span>
+          </div>
+          <div>
+            <strong>Proveedor:</strong>
+            <span>{{ product.provider }}</span>
+          </div>
+          <div>
+            <strong>Precio costo:</strong>
+            <span>{{ product.costPrice | currency:'USD' }}</span>
+          </div>
+          <div>
+            <strong>Precio venta:</strong>
+            <span>{{ product.salePrice | currency:'USD' }}</span>
+          </div>
+          <div>
+            <strong>Stock total:</strong>
+            <span>{{ product.totalStock }}</span>
+          </div>
+          <div>
+            <strong>Estado:</strong>
+            <ion-badge [color]="statusColor(product.status)">
+              {{ statusLabels[product.status] }}
+            </ion-badge>
+          </div>
+          <div>
+            <strong>Proximo vencimiento:</strong>
+            <span>{{ product.nextExpiryDate ? (product.nextExpiryDate | date:'shortDate') : 'Sin registro' }}</span>
+          </div>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Control por lotes</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-list>
+          <ion-item *ngFor="let lot of product.lots; trackBy: trackByLot">
+            <ion-label>
+              <h3>{{ lotLabel(lot.lotNumber, lot.provider) }}</h3>
+              <p>Stock: {{ lot.quantity }}</p>
+              <p *ngIf="lot.expiryDate">Vence: {{ lot.expiryDate | date:'shortDate' }}</p>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Registrar movimiento</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <form [formGroup]="movementForm" (ngSubmit)="recordMovement(product)">
+          <ion-item>
+            <ion-label>Tipo</ion-label>
+            <ion-segment formControlName="type">
+              <ion-segment-button value="IN">
+                <ion-label>Entrada</ion-label>
+              </ion-segment-button>
+              <ion-segment-button value="OUT">
+                <ion-label>Salida</ion-label>
+              </ion-segment-button>
+            </ion-segment>
+          </ion-item>
+
+          <ion-item>
+            <ion-label>Motivo</ion-label>
+            <ion-select interface="popover" formControlName="reason">
+              <ion-select-option value="purchase">Compra</ion-select-option>
+              <ion-select-option value="sale">Venta</ion-select-option>
+              <ion-select-option value="adjustment">Ajuste</ion-select-option>
+              <ion-select-option value="waste">Merma</ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Cantidad</ion-label>
+            <ion-input type="number" formControlName="quantity"></ion-input>
+          </ion-item>
+
+          <ion-item *ngIf="product.lots.length">
+            <ion-label>Lote</ion-label>
+            <ion-select interface="popover" formControlName="lotId">
+              <ion-select-option value="">Auto</ion-select-option>
+              <ion-select-option *ngFor="let lot of product.lots" [value]="lot.id">
+                {{ lotLabel(lot.lotNumber, lot.provider) }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Nota</ion-label>
+            <ion-textarea formControlName="note" autoGrow="true"></ion-textarea>
+          </ion-item>
+
+          <ion-item *ngIf="movementForm.value.type === 'IN'">
+            <ion-label position="stacked">Nuevo lote (opcional)</ion-label>
+            <ion-input placeholder="Numero de lote" formControlName="newLotNumber"></ion-input>
+          </ion-item>
+          <div class="lot-extra" *ngIf="movementForm.value.type === 'IN'">
+            <ion-item>
+              <ion-label position="stacked">Vencimiento</ion-label>
+              <ion-input type="date" formControlName="newLotExpiry"></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label position="stacked">Proveedor</ion-label>
+              <ion-input formControlName="newLotProvider"></ion-input>
+            </ion-item>
+          </div>
+
+          
+          <ion-button expand="block" type="submit" [disabled]="movementForm.invalid">
+            Registrar
+          </ion-button>
+          <ion-button expand="block" type="button" color="medium" fill="outline" (click)="cancel()">
+            Cancelar
+          </ion-button>
+        </form>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Historial de movimientos</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-list *ngIf="product.movements.length; else noMovements">
+          <ion-item *ngFor="let movement of product.movements; trackBy: trackByMovement">
+            <ion-label>
+              <h3>
+                {{ movement.type === 'IN' ? 'Entrada' : 'Salida' }} - {{ movement.quantity }} unidades
+              </h3>
+              <p>
+                Motivo: {{ movement.reason }}
+                <ng-container *ngIf="movement.lotId">- Lote asociado</ng-container>
+              </p>
+              <p>
+                Fecha: {{ movement.createdAt | date:'short' }}
+                <ng-container *ngIf="movement.note">- Nota: {{ movement.note }}</ng-container>
+              </p>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+        <ng-template #noMovements>
+          <p class="empty">Sin movimientos registrados.</p>
+        </ng-template>
+      </ion-card-content>
+    </ion-card>
+  </ng-container>
+</ion-content>
+
+
+
+
+
+
+
+
+

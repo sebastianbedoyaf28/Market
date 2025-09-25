@@ -1,0 +1,25 @@
+﻿:host {
+  ion-content {
+    --padding-start: 16px;
+    --padding-end: 16px;
+    --padding-top: 16px;
+  }
+}
+
+.details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.lot-extra {
+  display: grid;
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.empty {
+  text-align: center;
+  color: var(--ion-color-medium-shade);
+  margin: 16px 0;
+}

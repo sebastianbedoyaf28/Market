@@ -1,0 +1,128 @@
+﻿<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button fill="clear" color="medium" (click)="router.navigate(['/home'])">
+        <ion-icon slot="start" name="home-outline"></ion-icon>
+        Inicio
+      </ion-button>
+    </ion-buttons>
+    <ion-title>Gestion de inventario</ion-title>
+    <ion-buttons slot="end">
+      <ion-button fill="clear" (click)="onExportCsv()" color="medium">
+        <ion-icon slot="start" name="document-text-outline"></ion-icon>
+        CSV
+      </ion-button>
+      <ion-button fill="clear" (click)="onExportPdf()" color="medium">
+        <ion-icon slot="start" name="print-outline"></ion-icon>
+        PDF
+      </ion-button>
+      <ion-button color="primary" (click)="onCreateProduct()">
+        <ion-icon slot="start" name="add-circle-outline"></ion-icon>
+        Nuevo producto
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <form [formGroup]="filtersForm" class="filters">
+    <ion-item>
+      <ion-icon name="search-outline" slot="start"></ion-icon>
+      <ion-input
+        formControlName="search"
+        placeholder="Buscar por nombre o SKU"
+        type="search">
+      </ion-input>
+      <ion-button fill="clear" size="small" (click)="onClearFilters()">
+        Limpiar
+      </ion-button>
+    </ion-item>
+
+    <div class="filters__grid">
+      <ion-item>
+        <ion-label>Categoria</ion-label>
+        <ion-select interface="popover" formControlName="category" placeholder="Todas">
+          <ion-select-option value="">Todas</ion-select-option>
+          <ion-select-option *ngFor="let category of (categories$ | async)" [value]="category">
+            {{ category }}
+          </ion-select-option>
+        </ion-select>
+      </ion-item>
+
+      <ion-item>
+        <ion-label>Proveedor</ion-label>
+        <ion-select interface="popover" formControlName="provider" placeholder="Todos">
+          <ion-select-option value="">Todos</ion-select-option>
+          <ion-select-option *ngFor="let provider of (providers$ | async)" [value]="provider">
+            {{ provider }}
+          </ion-select-option>
+        </ion-select>
+      </ion-item>
+
+      <ion-item>
+        <ion-label>Estado</ion-label>
+        <ion-select interface="popover" formControlName="status" placeholder="Todos">
+          <ion-select-option value="">Todos</ion-select-option>
+          <ion-select-option *ngFor="let status of statuses" [value]="status.value">
+            {{ status.label }}
+          </ion-select-option>
+        </ion-select>
+      </ion-item>
+    </div>
+
+    <div class="filters__grid">
+      <ion-item>
+        <ion-label position="stacked">Vence desde</ion-label>
+        <ion-input type="date" formControlName="expiryFrom"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label position="stacked">Vence hasta</ion-label>
+        <ion-input type="date" formControlName="expiryTo"></ion-input>
+      </ion-item>
+    </div>
+  </form>
+
+  <ng-container *ngIf="inventory$ | async as products">
+    <ion-list *ngIf="products.length; else emptyState">
+      <ion-item-sliding *ngFor="let product of products; trackBy: trackByProduct">
+        <ion-item button detail="false" (click)="onOpenProduct(product)">
+          <ion-avatar slot="start" *ngIf="product.imageUrl">
+            <img [src]="product.imageUrl" [alt]="product.name" />
+          </ion-avatar>
+          <ion-label>
+            <h2>{{ product.name }}</h2>
+            <p>
+              SKU: {{ product.sku }} - Categoria: {{ product.category }} - Proveedor: {{ product.provider }}
+            </p>
+            <p>
+              Stock total: {{ product.totalStock }}
+              <ng-container *ngIf="product.nextExpiryDate as expiry">
+                - Proximo vencimiento: {{ expiry | date:'shortDate' }}
+              </ng-container>
+            </p>
+          </ion-label>
+          <ion-badge slot="end" [color]="statusColor(product.status)">
+            {{ statusLabel(product.status) }}
+          </ion-badge>
+        </ion-item>
+        <ion-item-options side="end">
+          <ion-item-option color="primary" (click)="router.navigate(['/inventory/product', product.id, 'edit'])">
+            <ion-icon slot="icon-only" name="create-outline"></ion-icon>
+          </ion-item-option>
+          <ion-item-option color="medium" (click)="onOpenProduct(product)">
+            <ion-icon slot="icon-only" name="open-outline"></ion-icon>
+          </ion-item-option>
+        </ion-item-options>
+      </ion-item-sliding>
+    </ion-list>
+  </ng-container>
+
+  <ng-template #emptyState>
+    <div class="empty">
+      <ion-icon name="cube-outline"></ion-icon>
+      <h3>Sin coincidencias</h3>
+      <p>Ajusta los filtros o agrega un nuevo producto.</p>
+    </div>
+  </ng-template>
+</ion-content>
+

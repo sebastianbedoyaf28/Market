@@ -1,0 +1,100 @@
+﻿<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/inventory"></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{ mode === 'create' ? 'Nuevo producto' : 'Editar producto' }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button color="primary" (click)="submit()">
+        <ion-icon slot="start" name="save-outline"></ion-icon>
+        Guardar
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <form [formGroup]="form" (ngSubmit)="submit()" class="form">
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Información general</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-item>
+          <ion-label position="stacked">Nombre</ion-label>
+          <ion-input formControlName="name"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="stacked">SKU</ion-label>
+          <ion-input formControlName="sku"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="stacked">Categoría</ion-label>
+          <ion-input formControlName="category"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="stacked">Proveedor</ion-label>
+          <ion-input formControlName="provider"></ion-input>
+        </ion-item>
+        <div class="prices">
+          <ion-item>
+            <ion-label position="stacked">Precio costo</ion-label>
+            <ion-input type="number" formControlName="costPrice"></ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-label position="stacked">Precio venta</ion-label>
+            <ion-input type="number" formControlName="salePrice"></ion-input>
+          </ion-item>
+        </div>
+        <ion-item>
+          <ion-label position="stacked">Imagen (URL opcional)</ion-label>
+          <ion-input formControlName="imageUrl"></ion-input>
+        </ion-item>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Lotes</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <div formArrayName="lots">
+          <ion-card class="lot" *ngFor="let lot of lots.controls; let i = index; trackBy: trackByIndex" [formGroupName]="i">
+            <ion-card-header>
+              <ion-card-title>Lote {{ i + 1 }}</ion-card-title>
+              <ion-button color="danger" fill="clear" size="small" (click)="removeLot(i)">
+                <ion-icon name="remove-circle-outline"></ion-icon>
+              </ion-button>
+            </ion-card-header>
+            <ion-card-content>
+              <ion-item>
+                <ion-label position="stacked">Número de lote</ion-label>
+                <ion-input formControlName="lotNumber"></ion-input>
+              </ion-item>
+              <ion-item>
+                <ion-label position="stacked">Cantidad inicial</ion-label>
+                <ion-input type="number" formControlName="quantity"></ion-input>
+              </ion-item>
+              <ion-item>
+                <ion-label position="stacked">Fecha de vencimiento</ion-label>
+                <ion-input type="date" formControlName="expiryDate"></ion-input>
+              </ion-item>
+              <ion-item>
+                <ion-label position="stacked">Proveedor lote</ion-label>
+                <ion-input formControlName="provider"></ion-input>
+              </ion-item>
+            </ion-card-content>
+          </ion-card>
+        </div>
+        <ion-button expand="block" fill="outline" (click)="addLot()">
+          <ion-icon slot="start" name="add-circle-outline"></ion-icon>
+          Añadir lote
+        </ion-button>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-button type="submit" expand="block" [disabled]="form.invalid">
+      {{ mode === 'create' ? 'Crear producto' : 'Actualizar producto' }}
+    </ion-button>
+  </form>
+</ion-content>

@@ -1,3 +1,4 @@
+﻿@use "sass:color";
 // Variables de color
 $primary-color: #007bff;
 $secondary-color: #6c757d;
@@ -82,7 +83,7 @@ $border-color: #404040;
   }
 }
 
-// Checkbox para mostrar contraseña
+// Checkbox para mostrar contrasena
 .show-password-checkbox {
   display: flex;
   align-items: center;
@@ -178,7 +179,7 @@ $border-color: #404040;
   }
 }
 
-// Enlace de olvidé contraseña
+// Enlace de olvido de contrasena
 .forgot-password {
   margin-top: 1.5rem;
   text-align: right;
@@ -194,7 +195,7 @@ $border-color: #404040;
   transition: color 0.2s ease;
   
   &:hover {
-    color: lighten($primary-color, 10%);
+    color: color.adjust($primary-color, $lightness: 10%);
   }
 }
 
@@ -222,7 +223,7 @@ $border-color: #404040;
   margin-top: 0.25rem;
 }
 
-// Spinner del botón
+// Spinner del boton
 .btn-spinner {
   margin-right: 0.5rem;
 }
@@ -255,3 +256,6 @@ ion-input.custom-input:focus-within {
   box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
 }
   
+
+
+
