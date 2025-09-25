@@ -5,9 +5,17 @@ import { supabase } from '../core/supabase-client';
 export interface Product {
   id: string;
   name: string;
+  sku: string;
+  category: string;
+  costPrice: number;
   price: number;
+  stock: number;
+  minStock: number;
   image_url?: string | null;
+  expiryDate?: string | null;
+  description?: string;
   created_at?: string;
+  updated_at?: string;
 }
 
 @Injectable({ providedIn: 'root' })

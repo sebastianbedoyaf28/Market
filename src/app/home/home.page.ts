@@ -93,29 +93,28 @@ export class HomePage implements OnInit {
   }
 
   navigateToModule(module: string) {
-    // Por ahora mostrar toast, después implementaremos las rutas
-    this.showToast(`Navegando a ${module}`, 'primary');
-    
-    // Aquí implementarías la navegación a cada módulo
+    // Navegación a módulos implementados
     switch (module) {
       case 'inventory':
-        // this.router.navigateByUrl('/inventory');
+        this.router.navigateByUrl('/inventory');
         break;
       case 'orders':
-        // this.router.navigateByUrl('/orders');
+        this.showToast('Módulo de pedidos próximamente', 'primary');
         break;
       case 'sales':
-        // this.router.navigateByUrl('/sales');
+        this.showToast('Módulo de ventas próximamente', 'primary');
         break;
       case 'reports':
-        // this.router.navigateByUrl('/reports');
+        this.showToast('Módulo de reportes próximamente', 'primary');
         break;
       case 'users':
-        // this.router.navigateByUrl('/users');
+        this.showToast('Módulo de usuarios próximamente', 'primary');
         break;
       case 'alerts':
-        // this.router.navigateByUrl('/alerts');
+        this.showToast('Panel de alertas próximamente', 'primary');
         break;
+      default:
+        this.showToast(`Navegando a ${module}`, 'primary');
     }
   }
 
