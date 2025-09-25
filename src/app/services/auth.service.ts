@@ -35,7 +35,7 @@ export class AuthService {
 
   resetPassword(email: string) {
     return supabase().auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin + '/login',
+      redirectTo: window.location.origin + '/reset-password',
     });
   }
 
