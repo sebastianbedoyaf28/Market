@@ -19,7 +19,7 @@
     <p class="dashboard-subtitle">Panel de control del sistema</p>
     <div class="user-info">
       <ion-icon name="person-circle-outline"></ion-icon>
-      <span>Bienvenido al sistema</span>
+      <span>Bienvenido {{ (auth.user?.email) || 'al sistema' }}</span>
     </div>
   </div>
 
@@ -150,4 +150,8 @@
       </ion-item>
     </ion-list>
   </div>
+  <ion-refresher slot="fixed" (ionRefresh)="loadDashboardData(); $event.target.complete()">
+    <ion-refresher-content pullingText="Desliza para refrescar"></ion-refresher-content>
+  </ion-refresher>
+
 </ion-content>
