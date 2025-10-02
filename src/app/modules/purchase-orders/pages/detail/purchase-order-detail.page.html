@@ -1,0 +1,35 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Pedido</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="exportPdf()">
+        <ion-icon name="download"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content *ngIf="order as o" class="ion-padding">
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>{{ o.supplierName || o.supplierId }}</ion-card-title>
+      <ion-card-subtitle>Entrega: {{ o.expectedDate | date:'shortDate' }} · Estado: {{ o.status }}</ion-card-subtitle>
+    </ion-card-header>
+  </ion-card>
+
+  <ion-list>
+    <ion-item *ngFor="let it of o.items; let i = index">
+      <ion-label>
+        <h3>{{ it.name || it.productId }}</h3>
+        <p>Solicitado: {{ it.quantityOrdered }}</p>
+      </ion-label>
+      <ion-input type="number" [(ngModel)]="itemsToReceive[i].quantityReceived" min="0" [max]="it.quantityOrdered" placeholder="recibido"></ion-input>
+    </ion-item>
+  </ion-list>
+
+  <ion-button expand="block" color="medium" (click)="markSent()">Marcar Enviado</ion-button>
+  <ion-button expand="block" color="success" (click)="receive()">Registrar Recepción</ion-button>
+  <ion-button expand="block" color="danger" (click)="markCancelled()">Cancelar</ion-button>
+</ion-content>
+
+

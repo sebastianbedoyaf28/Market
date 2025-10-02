@@ -1,0 +1,47 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Nuevo Pedido</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <ion-item>
+    <ion-label position="stacked">Proveedor</ion-label>
+    <ion-select [(ngModel)]="supplierId" interface="popover" placeholder="Selecciona proveedor">
+      <ion-select-option *ngFor="let s of suppliers" [value]="s.id">{{ s.name }} — {{ s.email }}</ion-select-option>
+    </ion-select>
+  </ion-item>
+
+  <ion-item lines="none">
+    <ion-button size="small" (click)="openNewSupplierAlert()">Nuevo proveedor</ion-button>
+  </ion-item>
+
+  <ion-item>
+    <ion-label position="stacked">Fecha de entrega</ion-label>
+    <ion-datetime presentation="date" [(ngModel)]="expectedDate"></ion-datetime>
+  </ion-item>
+
+  <ion-list>
+    <ion-item *ngFor="let it of items; let i = index">
+      <ion-label>
+        <div>
+          <strong>Producto</strong>
+        </div>
+        <div *ngIf="products.length === 0" class="ion-text-wrap">No hay productos en inventario.</div>
+      </ion-label>
+      <ion-select [(ngModel)]="it.productId" interface="popover" placeholder="Selecciona producto">
+        <ion-select-option *ngFor="let p of products" [value]="p.id">{{ p.sku }} — {{ p.name }}</ion-select-option>
+      </ion-select>
+    </ion-item>
+    <ion-item *ngFor="let it of items; let i = index">
+      <ion-input type="number" placeholder="cantidad" [(ngModel)]="it.quantityOrdered" min="1"></ion-input>
+      <ion-input type="number" placeholder="costo (opcional)" [(ngModel)]="it.unitCost" min="0" step="0.01"></ion-input>
+      <ion-button color="danger" (click)="removeItem(i)">-</ion-button>
+    </ion-item>
+  </ion-list>
+  <ion-button expand="block" (click)="addItem()">Agregar producto</ion-button>
+
+  <ion-button expand="block" color="primary" [disabled]="saving" (click)="save()">Guardar</ion-button>
+</ion-content>
+
+

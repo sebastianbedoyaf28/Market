@@ -1,0 +1,30 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Pedidos a Proveedores</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="newOrder()">
+        <ion-icon name="add"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+  </ion-header>
+
+<ion-content>
+  <ion-refresher slot="fixed" (ionRefresh)="load(); $event.target.complete()">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <ion-list *ngIf="!loading">
+    <ion-item *ngFor="let o of orders" (click)="open(o)">
+      <ion-label>
+        <h2>{{ o.supplierName || o.supplierId }} — {{ o.status }}</h2>
+        <p>Entrega: {{ o.expectedDate | date:'shortDate' }} · {{ o.items.length }} items</p>
+      </ion-label>
+      <ion-note slot="end">{{ o.createdAt | date:'short' }}</ion-note>
+    </ion-item>
+  </ion-list>
+
+  <ion-spinner *ngIf="loading" class="ion-padding"></ion-spinner>
+</ion-content>
+
+

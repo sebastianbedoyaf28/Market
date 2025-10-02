@@ -9,6 +9,7 @@ const routes: Routes = [
   { path: 'reset-password', loadComponent: () => import('./pages/reset-password/reset-password.page').then(m => m.ResetPasswordPage) },
   { path: 'inventory', canActivate: [AuthGuard], loadChildren: () => import('./modules/inventory/inventory.module').then(m => m.InventoryModule) },
   { path: 'orders', canActivate: [AuthGuard], loadChildren: () => import('./modules/purchase-orders/purchase-orders.module').then(m => m.PurchaseOrdersModule) },
+  { path: 'alerts', canActivate: [AuthGuard], loadComponent: () => import('./modules/alerts/pages/list/alerts-list.page').then(m => m.AlertsListPage) },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 ];
 

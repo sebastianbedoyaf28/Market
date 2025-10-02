@@ -1,0 +1,26 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Alertas</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-refresher slot="fixed" (ionRefresh)="load(); $event.target.complete()">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <ion-list *ngIf="!loading">
+    <ion-item *ngFor="let a of alerts">
+      <ion-icon [name]="a.type === 'LOW_STOCK' ? 'alert-circle-outline' : a.type === 'OUT_OF_STOCK' ? 'close-circle-outline' : 'time-outline'" slot="start"></ion-icon>
+      <ion-label>
+        <h3>{{ a.sku }} — {{ a.name }}</h3>
+        <p>{{ a.details }}</p>
+      </ion-label>
+      <ion-badge [color]="a.type === 'OUT_OF_STOCK' ? 'danger' : a.type === 'LOW_STOCK' ? 'warning' : 'medium'">{{ a.type }}</ion-badge>
+    </ion-item>
+  </ion-list>
+
+  <ion-spinner *ngIf="loading" class="ion-padding"></ion-spinner>
+</ion-content>
+
+
