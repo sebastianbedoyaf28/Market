@@ -116,6 +116,19 @@ export class HomePage implements OnInit {
       default:
         this.showToast(`Navegando a ${module}`, 'primary');
     }
+<<<<<<< Updated upstream
+=======
+    if (module === 'orders') {
+      this.router.navigateByUrl('/orders');
+      return;
+    }
+    if (module === 'alerts') {
+      this.router.navigateByUrl('/alerts');
+      return;
+    }
+
+    this.showToast('Navegando a ' + module, 'primary');
+>>>>>>> Stashed changes
   }
 
   async logout() {
