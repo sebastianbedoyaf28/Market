@@ -10,6 +10,7 @@ const routes: Routes = [
   { path: 'inventory', canActivate: [AuthGuard], loadChildren: () => import('./modules/inventory/inventory.module').then(m => m.InventoryModule) },
   { path: 'orders', canActivate: [AuthGuard], loadChildren: () => import('./modules/purchase-orders/purchase-orders.module').then(m => m.PurchaseOrdersModule) },
   { path: 'alerts', canActivate: [AuthGuard], loadComponent: () => import('./modules/alerts/pages/list/alerts-list.page').then(m => m.AlertsListPage) },
+  { path: 'sales-import', canActivate: [AuthGuard], loadComponent: () => import('./pages/sales-import/sales-import.page').then(m => m.SalesImportPage) },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 ];
 

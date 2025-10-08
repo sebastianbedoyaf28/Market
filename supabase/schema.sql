@@ -106,3 +106,36 @@ create policy "Public read purchase_order_items" on public.purchase_order_items
 create policy "Auth write purchase_order_items" on public.purchase_order_items
   for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 
+-- ============================================
+-- Sales Table for Import Feature
+-- ============================================
+
+-- Sales table to store sales records imported from external systems
+create table if not exists public.sales (
+  id uuid primary key default uuid_generate_v4(),
+  product_id uuid references public.products(id) on delete restrict,
+  quantity integer not null check (quantity > 0),
+  unit_price numeric(12,2) not null check (unit_price >= 0),
+  total_price numeric(12,2) not null check (total_price >= 0),
+  sale_date date not null,
+  customer_name text,
+  invoice_number text,
+  import_source text default 'manual', -- manual | csv_excel_import | pos_system
+  user_id uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.sales enable row level security;
+
+create policy "Public read sales" on public.sales
+  for select using (true);
+create policy "Auth write sales" on public.sales
+  for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+
+-- Create indexes for better performance
+create index if not exists idx_sales_product_id on public.sales(product_id);
+create index if not exists idx_sales_sale_date on public.sales(sale_date);
+create index if not exists idx_sales_import_source on public.sales(import_source);
+create index if not exists idx_sales_created_at on public.sales(created_at);
+

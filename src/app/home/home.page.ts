@@ -153,6 +153,14 @@ export class HomePage implements OnInit {
       this.router.navigateByUrl('/orders');
       return;
     }
+    if (module === 'sales-import') {
+      this.router.navigateByUrl('/sales-import');
+      return;
+    }
+    if (module === 'alerts') {
+      this.router.navigateByUrl('/alerts');
+      return;
+    }
 
     this.showToast('Navegando a ' + module, 'primary');
   }

@@ -30,8 +30,10 @@
     "@ionic/angular": "^8.0.0",
     "@supabase/supabase-js": "^2.57.4",
     "ionicons": "^7.0.0",
+    "papaparse": "^5.5.3",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
+    "xlsx": "^0.18.5",
     "zone.js": "~0.15.0"
   },
   "devDependencies": {
@@ -47,6 +49,7 @@
     "@capacitor/cli": "7.4.3",
     "@ionic/angular-toolkit": "^12.0.0",
     "@types/jasmine": "~5.1.0",
+    "@types/papaparse": "^5.3.16",
     "@typescript-eslint/eslint-plugin": "^8.18.0",
     "@typescript-eslint/parser": "^8.18.0",
     "eslint": "^9.16.0",

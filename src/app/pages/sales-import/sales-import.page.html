@@ -1,0 +1,368 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>Importar Ventas</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">Importar Ventas</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <!-- Barra de progreso -->
+  <ion-card>
+    <ion-card-content>
+      <div class="progress-container">
+        <ion-label>{{ getCurrentStepText() }}</ion-label>
+        <ion-progress-bar [value]="getProgress()"></ion-progress-bar>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Paso 1: Selección de archivo -->
+  <div *ngIf="currentStep === 1">
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>
+          <ion-icon name="cloud-upload-outline"></ion-icon>
+          Seleccionar Archivo
+        </ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <p>Seleccione un archivo CSV o Excel (.xlsx/.xls) con las ventas a importar.</p>
+        
+        <!-- Área de selección de archivo -->
+        <div class="file-drop-zone" (click)="selectFile()">
+          <ion-icon name="document-attach-outline" size="large"></ion-icon>
+          <p>Haga clic aquí para seleccionar un archivo</p>
+          <p class="file-formats">Formatos soportados: CSV, Excel (.xlsx, .xls)</p>
+        </div>
+        
+        <input #fileInput type="file" accept=".csv,.xlsx,.xls" (change)="onFileSelected($event)" style="display: none;">
+        
+        <!-- Botón de descarga de ejemplo -->
+        <ion-button 
+          fill="outline" 
+          size="small" 
+          (click)="downloadSampleFile()"
+          class="example-button">
+          <ion-icon name="download-outline" slot="start"></ion-icon>
+          Descargar Archivo de Ejemplo
+        </ion-button>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Información del formato esperado -->
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Formato Esperado</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <p>El archivo debe contener las siguientes columnas (nombres flexibles):</p>
+        <ion-list>
+          <ion-item>
+            <ion-label>
+              <h3>SKU o Código del Producto</h3>
+              <p>Identificador único del producto</p>
+            </ion-label>
+          </ion-item>
+          <ion-item>
+            <ion-label>
+              <h3>Nombre del Producto</h3>
+              <p>Nombre o descripción del producto</p>
+            </ion-label>
+          </ion-item>
+          <ion-item>
+            <ion-label>
+              <h3>Cantidad <ion-badge color="danger">Requerido</ion-badge></h3>
+              <p>Cantidad vendida</p>
+            </ion-label>
+          </ion-item>
+          <ion-item>
+            <ion-label>
+              <h3>Precio Unitario</h3>
+              <p>Precio por unidad</p>
+            </ion-label>
+          </ion-item>
+          <ion-item>
+            <ion-label>
+              <h3>Fecha de Venta</h3>
+              <p>Fecha de la venta (DD/MM/YYYY o YYYY-MM-DD)</p>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <!-- Paso 2: Mapeo de columnas -->
+  <div *ngIf="currentStep === 2 && preview">
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>
+          <ion-icon name="eye-outline"></ion-icon>
+          Vista Previa y Mapeo
+        </ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <p><strong>Archivo:</strong> {{ selectedFile?.name }}</p>
+        <p><strong>Total de filas:</strong> {{ preview.totalRows }}</p>
+        
+        <!-- Vista previa de datos -->
+        <div class="preview-table">
+          <h4>Vista Previa (primeras 5 filas):</h4>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th *ngFor="let header of preview.headers">{{ header }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let row of preview.sampleData">
+                  <td *ngFor="let header of preview.headers">{{ row[header] }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Mapeo de columnas -->
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Mapear Columnas</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <p>Asocie las columnas de su archivo con los campos del sistema:</p>
+        
+        <ion-grid>
+          <ion-row>
+            <ion-col size="12" size-md="6">
+              <ion-item>
+                <ion-label position="stacked">
+                  SKU / Código del Producto
+                  <ion-chip color="primary" *ngIf="mappingOptions.sku">Mapeado</ion-chip>
+                </ion-label>
+                <ion-select [(ngModel)]="mappingOptions.sku" placeholder="Seleccionar columna">
+                  <ion-select-option value="">-- No mapear --</ion-select-option>
+                  <ion-select-option *ngFor="let header of getAvailableHeaders()" [value]="header">
+                    {{ header }}
+                  </ion-select-option>
+                </ion-select>
+              </ion-item>
+            </ion-col>
+            
+            <ion-col size="12" size-md="6">
+              <ion-item>
+                <ion-label position="stacked">
+                  Nombre del Producto
+                  <ion-chip color="primary" *ngIf="mappingOptions.productName">Mapeado</ion-chip>
+                </ion-label>
+                <ion-select [(ngModel)]="mappingOptions.productName" placeholder="Seleccionar columna">
+                  <ion-select-option value="">-- No mapear --</ion-select-option>
+                  <ion-select-option *ngFor="let header of getAvailableHeaders()" [value]="header">
+                    {{ header }}
+                  </ion-select-option>
+                </ion-select>
+              </ion-item>
+            </ion-col>
+            
+            <ion-col size="12" size-md="6">
+              <ion-item>
+                <ion-label position="stacked">
+                  Cantidad <ion-badge color="danger">Requerido</ion-badge>
+                  <ion-chip color="success" *ngIf="mappingOptions.quantity">Mapeado</ion-chip>
+                </ion-label>
+                <ion-select [(ngModel)]="mappingOptions.quantity" placeholder="Seleccionar columna">
+                  <ion-select-option value="">-- Seleccionar --</ion-select-option>
+                  <ion-select-option *ngFor="let header of getAvailableHeaders()" [value]="header">
+                    {{ header }}
+                  </ion-select-option>
+                </ion-select>
+              </ion-item>
+            </ion-col>
+            
+            <ion-col size="12" size-md="6">
+              <ion-item>
+                <ion-label position="stacked">
+                  Precio Unitario
+                  <ion-chip color="primary" *ngIf="mappingOptions.unitPrice">Mapeado</ion-chip>
+                </ion-label>
+                <ion-select [(ngModel)]="mappingOptions.unitPrice" placeholder="Seleccionar columna">
+                  <ion-select-option value="">-- No mapear --</ion-select-option>
+                  <ion-select-option *ngFor="let header of getAvailableHeaders()" [value]="header">
+                    {{ header }}
+                  </ion-select-option>
+                </ion-select>
+              </ion-item>
+            </ion-col>
+            
+            <ion-col size="12" size-md="6">
+              <ion-item>
+                <ion-label position="stacked">
+                  Precio Total
+                  <ion-chip color="primary" *ngIf="mappingOptions.totalPrice">Mapeado</ion-chip>
+                </ion-label>
+                <ion-select [(ngModel)]="mappingOptions.totalPrice" placeholder="Seleccionar columna">
+                  <ion-select-option value="">-- No mapear --</ion-select-option>
+                  <ion-select-option *ngFor="let header of getAvailableHeaders()" [value]="header">
+                    {{ header }}
+                  </ion-select-option>
+                </ion-select>
+              </ion-item>
+            </ion-col>
+            
+            <ion-col size="12" size-md="6">
+              <ion-item>
+                <ion-label position="stacked">
+                  Fecha de Venta
+                  <ion-chip color="primary" *ngIf="mappingOptions.saleDate">Mapeado</ion-chip>
+                </ion-label>
+                <ion-select [(ngModel)]="mappingOptions.saleDate" placeholder="Seleccionar columna">
+                  <ion-select-option value="">-- No mapear --</ion-select-option>
+                  <ion-select-option *ngFor="let header of getAvailableHeaders()" [value]="header">
+                    {{ header }}
+                  </ion-select-option>
+                </ion-select>
+              </ion-item>
+            </ion-col>
+            
+            <ion-col size="12" size-md="6">
+              <ion-item>
+                <ion-label position="stacked">
+                  Cliente
+                  <ion-chip color="primary" *ngIf="mappingOptions.customerName">Mapeado</ion-chip>
+                </ion-label>
+                <ion-select [(ngModel)]="mappingOptions.customerName" placeholder="Seleccionar columna">
+                  <ion-select-option value="">-- No mapear --</ion-select-option>
+                  <ion-select-option *ngFor="let header of getAvailableHeaders()" [value]="header">
+                    {{ header }}
+                  </ion-select-option>
+                </ion-select>
+              </ion-item>
+            </ion-col>
+            
+            <ion-col size="12" size-md="6">
+              <ion-item>
+                <ion-label position="stacked">
+                  Número de Factura
+                  <ion-chip color="primary" *ngIf="mappingOptions.invoiceNumber">Mapeado</ion-chip>
+                </ion-label>
+                <ion-select [(ngModel)]="mappingOptions.invoiceNumber" placeholder="Seleccionar columna">
+                  <ion-select-option value="">-- No mapear --</ion-select-option>
+                  <ion-select-option *ngFor="let header of getAvailableHeaders()" [value]="header">
+                    {{ header }}
+                  </ion-select-option>
+                </ion-select>
+              </ion-item>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+        
+        <!-- Botones de acción -->
+        <div class="action-buttons">
+          <ion-button fill="outline" (click)="resetImport()">
+            <ion-icon name="close-circle-outline" slot="start"></ion-icon>
+            Cancelar
+          </ion-button>
+          <ion-button (click)="processImport()" [disabled]="(!mappingOptions.sku && !mappingOptions.productName) || !mappingOptions.quantity">
+            <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+            Procesar Importación
+          </ion-button>
+        </div>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <!-- Paso 3: Procesando -->
+  <div *ngIf="currentStep === 3">
+    <ion-card>
+      <ion-card-content class="processing-content">
+        <ion-spinner name="crescent" color="primary"></ion-spinner>
+        <h2>Procesando ventas...</h2>
+        <p>Por favor espere mientras procesamos su archivo y actualizamos el inventario.</p>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <!-- Paso 4: Resultado -->
+  <div *ngIf="currentStep === 4 && importResult">
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>
+          <ion-icon [name]="importResult.success ? 'checkmark-circle-outline' : 'warning-outline'" 
+                    [color]="importResult.success ? 'success' : 'warning'"></ion-icon>
+          {{ importResult.success ? 'Importación Exitosa' : 'Importación Completada con Advertencias' }}
+        </ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-grid>
+          <ion-row>
+            <ion-col size="6" class="stat-col">
+              <div class="stat-item">
+                <h3>{{ importResult.totalRecords }}</h3>
+                <p>Total de registros</p>
+              </div>
+            </ion-col>
+            <ion-col size="6" class="stat-col">
+              <div class="stat-item">
+                <h3 class="success">{{ importResult.processedRecords }}</h3>
+                <p>Procesados exitosamente</p>
+              </div>
+            </ion-col>
+            <ion-col size="6" class="stat-col">
+              <div class="stat-item">
+                <h3 class="danger">{{ importResult.errorRecords }}</h3>
+                <p>Con errores</p>
+              </div>
+            </ion-col>
+            <ion-col size="6" class="stat-col">
+              <div class="stat-item">
+                <h3 class="warning">{{ importResult.warnings.length }}</h3>
+                <p>Advertencias</p>
+              </div>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+        
+        <!-- Errores -->
+        <div *ngIf="importResult.errors.length > 0" class="error-section">
+          <ion-item-divider>
+            <ion-label>Errores</ion-label>
+          </ion-item-divider>
+          <ion-list>
+            <ion-item *ngFor="let error of importResult.errors">
+              <ion-icon name="close-circle-outline" color="danger" slot="start"></ion-icon>
+              <ion-label class="ion-text-wrap">{{ error }}</ion-label>
+            </ion-item>
+          </ion-list>
+        </div>
+        
+        <!-- Advertencias -->
+        <div *ngIf="importResult.warnings.length > 0" class="warning-section">
+          <ion-item-divider>
+            <ion-label>Advertencias</ion-label>
+          </ion-item-divider>
+          <ion-list>
+            <ion-item *ngFor="let warning of importResult.warnings">
+              <ion-icon name="warning-outline" color="warning" slot="start"></ion-icon>
+              <ion-label class="ion-text-wrap">{{ warning }}</ion-label>
+            </ion-item>
+          </ion-list>
+        </div>
+        
+        <!-- Botón para nueva importación -->
+        <div class="action-buttons">
+          <ion-button fill="outline" (click)="resetImport()">
+            <ion-icon name="cloud-upload-outline" slot="start"></ion-icon>
+            Nueva Importación
+          </ion-button>
+        </div>
+      </ion-card-content>
+    </ion-card>
+  </div>
+</ion-content>
