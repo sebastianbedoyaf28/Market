@@ -161,6 +161,10 @@ export class HomePage implements OnInit {
       this.router.navigateByUrl('/alerts');
       return;
     }
+    if (module === 'reports') {
+      this.router.navigateByUrl('/reports');
+      return;
+    }
 
     this.showToast('Navegando a ' + module, 'primary');
   }

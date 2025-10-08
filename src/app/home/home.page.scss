@@ -239,6 +239,11 @@ $info-color: #17a2b8;
     background: linear-gradient(135deg, #6f42c1, #{$primary-color});
     color: #{$text-light};
   }
+
+  &.export {
+    background: linear-gradient(135deg, #17a2b8, #{$success-color});
+    color: #{$text-light};
+  }
 }
 
 // Actividad reciente

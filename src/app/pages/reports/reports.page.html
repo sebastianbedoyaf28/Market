@@ -1,0 +1,235 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>Exportar Reportes</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">Exportar Reportes</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <!-- Configuración de Exportación -->
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>
+        <ion-icon name="download-outline"></ion-icon>
+        Configurar Exportación
+      </ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-grid>
+        <ion-row>
+          <!-- Tipo de Reporte -->
+          <ion-col size="12" size-md="6">
+            <ion-item>
+              <ion-label position="stacked">
+                <h3>Tipo de Reporte</h3>
+                <p>Seleccione los datos a exportar</p>
+              </ion-label>
+              <ion-select 
+                [(ngModel)]="exportOptions.type" 
+                placeholder="Seleccionar tipo"
+                interface="popover">
+                <ion-select-option *ngFor="let type of reportTypes" [value]="type.value">
+                  <div class="select-option">
+                    <strong>{{ type.label }}</strong>
+                    <p>{{ type.description }}</p>
+                  </div>
+                </ion-select-option>
+              </ion-select>
+            </ion-item>
+          </ion-col>
+
+          <!-- Formato -->
+          <ion-col size="12" size-md="6">
+            <ion-item>
+              <ion-label position="stacked">
+                <h3>Formato de Archivo</h3>
+                <p>Seleccione el formato de salida</p>
+              </ion-label>
+              <ion-select 
+                [(ngModel)]="exportOptions.format" 
+                placeholder="Seleccionar formato"
+                interface="popover">
+                <ion-select-option *ngFor="let format of formats" [value]="format.value">
+                  <div class="select-option">
+                    <strong>{{ format.label }}</strong>
+                    <p>{{ format.description }}</p>
+                  </div>
+                </ion-select-option>
+              </ion-select>
+            </ion-item>
+          </ion-col>
+
+          <!-- Fecha Desde -->
+          <ion-col size="12" size-md="6">
+            <ion-item>
+              <ion-label position="stacked">
+                <h3>Fecha Desde (Opcional)</h3>
+                <p>Filtrar datos desde esta fecha</p>
+              </ion-label>
+              <ion-datetime 
+                presentation="date" 
+                [min]="getMinDate()" 
+                [max]="getMaxDate()"
+                (ionChange)="onDateFromChange($event)"
+                [value]="exportOptions.dateFrom">
+              </ion-datetime>
+            </ion-item>
+          </ion-col>
+
+          <!-- Fecha Hasta -->
+          <ion-col size="12" size-md="6">
+            <ion-item>
+              <ion-label position="stacked">
+                <h3>Fecha Hasta (Opcional)</h3>
+                <p>Filtrar datos hasta esta fecha</p>
+              </ion-label>
+              <ion-datetime 
+                presentation="date" 
+                [min]="exportOptions.dateFrom || getMinDate()" 
+                [max]="getMaxDate()"
+                (ionChange)="onDateToChange($event)"
+                [value]="exportOptions.dateTo">
+              </ion-datetime>
+            </ion-item>
+          </ion-col>
+
+          <!-- Incluir Metadata -->
+          <ion-col size="12">
+            <ion-item>
+              <ion-checkbox [(ngModel)]="exportOptions.includeMetadata" slot="start"></ion-checkbox>
+              <ion-label>
+                <h3>Incluir Información de Exportación</h3>
+                <p>Agregar responsable, fecha de exportación y estadísticas</p>
+              </ion-label>
+            </ion-item>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+
+      <!-- Vista Previa de Opciones -->
+      <div class="options-preview" *ngIf="exportOptions.type && exportOptions.format">
+        <h4>Vista Previa:</h4>
+        <ion-chip [color]="getReportTypeColor(exportOptions.type)">
+          <ion-icon [name]="getReportTypeIcon(exportOptions.type)"></ion-icon>
+          <ion-label>{{ getOptionsPreview() }}</ion-label>
+        </ion-chip>
+      </div>
+
+      <!-- Botones de Acción -->
+      <div class="action-buttons">
+        <ion-button 
+          fill="outline" 
+          (click)="clearDates()"
+          [disabled]="!exportOptions.dateFrom && !exportOptions.dateTo">
+          <ion-icon name="calendar-outline" slot="start"></ion-icon>
+          Limpiar Fechas
+        </ion-button>
+        
+        <ion-button 
+          (click)="executeExport()" 
+          [disabled]="!exportOptions.type || !exportOptions.format || isExporting">
+          <ion-spinner *ngIf="isExporting" name="crescent"></ion-spinner>
+          <ion-icon *ngIf="!isExporting" name="download-outline" slot="start"></ion-icon>
+          {{ isExporting ? 'Exportando...' : 'Exportar Reporte' }}
+        </ion-button>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Historial de Exportaciones -->
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>
+        <ion-icon name="time-outline"></ion-icon>
+        Historial de Exportaciones
+      </ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <div *ngIf="isLoadingHistory" class="loading-container">
+        <ion-spinner name="crescent"></ion-spinner>
+        <p>Cargando historial...</p>
+      </div>
+
+      <div *ngIf="!isLoadingHistory && exportHistory.length === 0" class="empty-state">
+        <ion-icon name="document-text-outline" size="large"></ion-icon>
+        <h3>No hay exportaciones previas</h3>
+        <p>Cuando realice su primera exportación, aparecerá aquí el historial.</p>
+      </div>
+
+      <ion-list *ngIf="!isLoadingHistory && exportHistory.length > 0">
+        <ion-item *ngFor="let export of exportHistory">
+          <div class="export-item-content">
+            <div class="export-header">
+              <ion-chip [color]="getReportTypeColor(export.reportType)" size="small">
+                <ion-icon [name]="getReportTypeIcon(export.reportType)"></ion-icon>
+                <ion-label>{{ getReportTypeLabel(export.reportType) }}</ion-label>
+              </ion-chip>
+              
+              <ion-badge [color]="getFormatColor(export.format)" style="margin-left: 8px;">
+                {{ export.format.toUpperCase() }}
+              </ion-badge>
+            </div>
+            
+            <div class="export-details">
+              <p><strong>{{ export.fileName }}</strong></p>
+              <p class="export-meta">
+                <ion-icon name="person-outline"></ion-icon>
+                {{ export.userName }}
+                <span style="margin: 0 8px;">•</span>
+                <ion-icon name="calendar-outline"></ion-icon>
+                {{ formatDate(export.createdAt) }}
+                <span style="margin: 0 8px;">•</span>
+                {{ export.totalRecords }} registros
+              </p>
+              <p *ngIf="export.dateFrom && export.dateTo" class="date-range">
+                📅 {{ export.dateFrom }} a {{ export.dateTo }}
+              </p>
+            </div>
+          </div>
+        </ion-item>
+      </ion-list>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Información sobre Exportaciones -->
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>
+        <ion-icon name="alert-circle-outline"></ion-icon>
+        Información Importante
+      </ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-list>
+        <ion-item>
+          <ion-icon name="checkmark-circle-outline" color="success" slot="start"></ion-icon>
+          <ion-label class="ion-text-wrap">
+            <h3>Trazabilidad Completa</h3>
+            <p>Cada exportación queda registrada con responsable y fecha para auditoría.</p>
+          </ion-label>
+        </ion-item>
+        
+        <ion-item>
+          <ion-icon name="checkmark-circle-outline" color="success" slot="start"></ion-icon>
+          <ion-label class="ion-text-wrap">
+            <h3>Formatos Optimizados</h3>
+            <p>CSV para análisis de datos, PDF para reportes formales y presentaciones.</p>
+          </ion-label>
+        </ion-item>
+        
+        <ion-item>
+          <ion-icon name="checkmark-circle-outline" color="success" slot="start"></ion-icon>
+          <ion-label class="ion-text-wrap">
+            <h3>Filtros Flexibles</h3>
+            <p>Exporte solo los datos que necesita usando filtros de fecha.</p>
+          </ion-label>
+        </ion-item>
+      </ion-list>
+    </ion-card-content>
+  </ion-card>
+</ion-content>

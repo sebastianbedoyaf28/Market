@@ -139,3 +139,33 @@ create index if not exists idx_sales_sale_date on public.sales(sale_date);
 create index if not exists idx_sales_import_source on public.sales(import_source);
 create index if not exists idx_sales_created_at on public.sales(created_at);
 
+-- ============================================
+-- Export History Table for Audit Trail
+-- ============================================
+
+-- Export history table to track all data exports for audit purposes
+create table if not exists public.export_history (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  user_name text not null,
+  report_type text not null check (report_type in ('inventory', 'sales', 'orders')),
+  format text not null check (format in ('csv', 'pdf')),
+  date_from date,
+  date_to date,
+  total_records integer not null check (total_records >= 0),
+  file_name text not null,
+  created_at timestamptz not null default now()
+);
+
+alter table public.export_history enable row level security;
+
+create policy "Public read export_history" on public.export_history
+  for select using (true);
+create policy "Auth write export_history" on public.export_history
+  for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+
+-- Create indexes for export history
+create index if not exists idx_export_history_user_id on public.export_history(user_id);
+create index if not exists idx_export_history_report_type on public.export_history(report_type);
+create index if not exists idx_export_history_created_at on public.export_history(created_at);
+
