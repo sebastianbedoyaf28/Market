@@ -120,9 +120,14 @@ export class ExportService {
       });
 
       return { success: true, fileName: `${fileName}.${options.format}` };
-    } catch (error) {
+    } catch (error: any) {
+      let msg = error?.message || error?.toString() || 'Error desconocido';
+      if (typeof error === 'object') {
+        if (error.error_description) msg = error.error_description;
+        if (error.message) msg = error.message;
+      }
       console.error('Error en exportación:', error);
-      return { success: false, error: `${error}` };
+      return { success: false, error: msg };
     }
   }
 

@@ -49,6 +49,21 @@ export class PurchaseOrderDetailPage implements OnInit {
     if (!this.order) return;
     try {
       this.loading = true;
+      // Detectar faltantes antes de registrar
+      const faltantes = this.order.items.filter((it, i) => {
+        const recibido = this.itemsToReceive[i]?.quantityReceived ?? 0;
+        return recibido < it.quantityOrdered;
+      });
+
+      if (faltantes.length > 0) {
+        const productos = faltantes.map(f => `${f.name || f.productId}: solicitado ${f.quantityOrdered}, recibido ${this.itemsToReceive.find(x => x.productId === f.productId)?.quantityReceived ?? 0}`).join('\n');
+        await this.alert.create({
+          header: 'Atención: Faltantes',
+          message: `Se recibieron menos unidades de lo solicitado para:\n${productos}`,
+          buttons: ['OK']
+        }).then(a => a.present());
+      }
+
       await this.svc.receive(this.order.id, this.itemsToReceive);
       await this.showToast('Recepción registrada', 'success');
       await this.reload();
