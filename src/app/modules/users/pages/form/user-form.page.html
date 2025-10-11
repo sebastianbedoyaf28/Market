@@ -1,0 +1,84 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="../"></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{ isEdit ? 'Editar usuario' : 'Nuevo usuario' }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button color="primary" (click)="submit()" [disabled]="saving">
+        <ion-icon slot="start" name="save-outline"></ion-icon>
+        Guardar
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <form [formGroup]="form" (ngSubmit)="submit()" class="form">
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Datos del usuario</ion-card-title>
+        <ion-card-subtitle>Completa la informacion basica del usuario.</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-item>
+          <ion-label position="stacked">Nombre completo</ion-label>
+          <ion-input formControlName="fullName" placeholder="Juan Perez"></ion-input>
+        </ion-item>
+        <ion-note color="danger" *ngIf="form.controls.fullName.touched && form.controls.fullName.invalid">
+          El nombre es obligatorio (minimo 3 caracteres).
+        </ion-note>
+
+        <ion-item>
+          <ion-label position="stacked">Correo electronico</ion-label>
+          <ion-input formControlName="email" placeholder="usuario@empresa.com"></ion-input>
+        </ion-item>
+        <ion-note color="danger" *ngIf="form.controls.email.touched && form.controls.email.invalid">
+          Debes ingresar un correo valido.
+        </ion-note>
+
+        <ion-item>
+          <ion-label position="stacked">Rol asignado</ion-label>
+          <ion-select formControlName="roleId" interface="popover" [disabled]="roles.length === 0">
+            <ion-select-option *ngFor="let role of roles" [value]="role.id">
+              {{ role.name }} ({{ role.code }})
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+        <ion-note color="danger" *ngIf="form.controls.roleId.touched && form.controls.roleId.invalid">
+          Debes asignar un rol.
+        </ion-note>
+
+        <ion-item>
+          <ion-label position="stacked">Telefono (opcional)</ion-label>
+          <ion-input formControlName="phone" placeholder="+52 55 1234 5678"></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-label>Activo</ion-label>
+          <ion-toggle formControlName="isActive"></ion-toggle>
+        </ion-item>
+      </ion-card-content>
+    </ion-card>
+
+    <div class="actions">
+      <ion-button expand="block" color="primary" type="submit" [disabled]="saving">Guardar</ion-button>
+      <ion-button expand="block" color="medium" fill="clear" type="button" (click)="cancel()" [disabled]="saving">
+        Cancelar
+      </ion-button>
+      <ion-button
+        expand="block"
+        color="danger"
+        type="button"
+        *ngIf="isEdit && userId !== currentUserId"
+        (click)="deleteUser()"
+        [disabled]="saving"
+      >
+        Eliminar
+      </ion-button>
+      <ion-note color="warning" *ngIf="userId === currentUserId">
+        No puedes eliminar ni desactivar tu propia cuenta desde esta vista.
+      </ion-note>
+    </div>
+  </form>
+</ion-content>

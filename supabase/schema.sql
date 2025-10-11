@@ -169,3 +169,118 @@ create index if not exists idx_export_history_user_id on public.export_history(u
 create index if not exists idx_export_history_report_type on public.export_history(report_type);
 create index if not exists idx_export_history_created_at on public.export_history(created_at);
 
+
+-- ============================================
+-- Roles & Users Management
+-- ============================================
+
+create table if not exists public.roles (
+  id uuid primary key default uuid_generate_v4(),
+  code text not null unique check (code in ('ADMIN', 'MANAGER', 'WAREHOUSE', 'CASHIER')),
+  name text not null unique,
+  description text not null,
+  permissions jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+alter table public.roles enable row level security;
+
+create policy "Authenticated manage roles" on public.roles
+  for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+
+create table if not exists public.app_users (
+  id uuid primary key default uuid_generate_v4(),
+  auth_user_id uuid unique references auth.users(id) on delete set null,
+  full_name text not null,
+  email text not null unique,
+  role_id uuid not null references public.roles(id) on delete restrict,
+  phone text,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint app_users_email_format check (
+    email ~* '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$'
+  )
+);
+
+alter table public.app_users enable row level security;
+
+create policy "Authenticated manage app_users" on public.app_users
+  for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+
+create index if not exists idx_app_users_email on public.app_users(email);
+create index if not exists idx_app_users_role_id on public.app_users(role_id);
+
+create or replace function public.set_app_users_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+create trigger trg_app_users_updated_at
+before update on public.app_users
+for each row execute function public.set_app_users_updated_at();
+
+insert into public.roles (code, name, description, permissions)
+values
+  (
+    'ADMIN',
+    'Administrador',
+    'Acceso total a todos los modulos y configuraciones.',
+    '[
+      "inventory:read",
+      "inventory:write",
+      "orders:read",
+      "orders:write",
+      "alerts:read",
+      "alerts:write",
+      "reports:read",
+      "reports:write",
+      "sales:import",
+      "roles:read",
+      "roles:write",
+      "users:read",
+      "users:write"
+    ]'
+  ),
+  (
+    'MANAGER',
+    'Gerente',
+    'Consulta indicadores, reportes y autoriza pedidos.',
+    '[
+      "inventory:read",
+      "orders:read",
+      "orders:authorize",
+      "reports:read",
+      "kpis:view"
+    ]'
+  ),
+  (
+    'WAREHOUSE',
+    'Almacenista',
+    'Gestiona inventario y flujo de pedidos.',
+    '[
+      "inventory:read",
+      "inventory:write",
+      "orders:read",
+      "orders:write"
+    ]'
+  ),
+  (
+    'CASHIER',
+    'Cajero',
+    'Consulta inventario y reporta ventas manualmente.',
+    '[
+      "inventory:read",
+      "sales:import"
+    ]'
+  )
+on conflict (code)
+do update
+set name = excluded.name,
+    description = excluded.description,
+    permissions = excluded.permissions;

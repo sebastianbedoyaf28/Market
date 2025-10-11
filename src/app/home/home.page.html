@@ -1,4 +1,4 @@
-<ion-header [translucent]="true">
+﻿<ion-header [translucent]="true">
   <ion-toolbar>
     <ion-buttons slot="start">
       <ion-menu-button></ion-menu-button>
@@ -13,17 +13,15 @@
 </ion-header>
 
 <ion-content [fullscreen]="true" class="dashboard-content">
-  <!-- Header del Dashboard -->
   <div class="dashboard-header">
     <h1 class="dashboard-title">Dashboard</h1>
     <p class="dashboard-subtitle">Panel de control del sistema</p>
     <div class="user-info">
       <ion-icon name="person-circle-outline"></ion-icon>
-      <span>Bienvenido {{ (auth.user?.email) || 'al sistema' }}</span>
+      <span>Bienvenido {{ auth.user?.email || 'al sistema' }}</span>
     </div>
   </div>
 
-  <!-- Métricas principales -->
   <div class="metrics-grid">
     <div class="metric-card">
       <div class="metric-icon inventory">
@@ -70,95 +68,32 @@
     </div>
   </div>
 
-  <!-- Módulos principales -->
   <div class="modules-section">
-    <h2 class="section-title">Módulos del Sistema</h2>
-    <div class="modules-grid">
-      <ion-card class="module-card" (click)="navigateToModule('inventory')">
-        <div class="module-icon inventory">
-          <ion-icon name="cube-outline"></ion-icon>
-        </div>
-        <ion-card-header>
-          <ion-card-title>Gestión de Inventarios</ion-card-title>
-          <ion-card-subtitle>Control de productos y stock</ion-card-subtitle>
-        </ion-card-header>
-      </ion-card>
-
-      <ion-card class="module-card" (click)="navigateToModule('orders')">
-        <div class="module-icon orders">
-          <ion-icon name="receipt-outline"></ion-icon>
-        </div>
-        <ion-card-header>
-          <ion-card-title>Gestión de Pedidos</ion-card-title>
-          <ion-card-subtitle>Seguimiento y recepción</ion-card-subtitle>
-        </ion-card-header>
-      </ion-card>
-
-      <ion-card class="module-card" (click)="navigateToModule('sales')">
-        <div class="module-icon sales">
-          <ion-icon name="card-outline"></ion-icon>
-        </div>
-        <ion-card-header>
-          <ion-card-title>Punto de Venta</ion-card-title>
-          <ion-card-subtitle>Registro de ventas</ion-card-subtitle>
-        </ion-card-header>
-      </ion-card>
-
-      <ion-card class="module-card" (click)="navigateToModule('reports')">
-        <div class="module-icon reports">
-          <ion-icon name="bar-chart-outline"></ion-icon>
-        </div>
-        <ion-card-header>
-          <ion-card-title>Reportes</ion-card-title>
-          <ion-card-subtitle>Análisis y exportación</ion-card-subtitle>
-        </ion-card-header>
-      </ion-card>
-
-      <ion-card class="module-card" (click)="navigateToModule('users')">
-        <div class="module-icon users">
-          <ion-icon name="people-outline"></ion-icon>
-        </div>
-        <ion-card-header>
-          <ion-card-title>Usuarios</ion-card-title>
-          <ion-card-subtitle>Gestión de roles</ion-card-subtitle>
-        </ion-card-header>
-      </ion-card>
-
-      <ion-card class="module-card" (click)="navigateToModule('alerts')">
-        <div class="module-icon alerts">
-          <ion-icon name="notifications-outline"></ion-icon>
-        </div>
-        <ion-card-header>
-          <ion-card-title>Alertas</ion-card-title>
-          <ion-card-subtitle>Monitoreo en tiempo real</ion-card-subtitle>
-        </ion-card-header>
-      </ion-card>
-
-      <ion-card class="module-card" (click)="navigateToModule('sales-import')">
-        <div class="module-icon import">
-          <ion-icon name="cloud-upload-outline"></ion-icon>
-        </div>
-        <ion-card-header>
-          <ion-card-title>Importar Ventas</ion-card-title>
-          <ion-card-subtitle>CSV/Excel desde sistemas externos</ion-card-subtitle>
-        </ion-card-header>
-      </ion-card>
-
-      <ion-card class="module-card" (click)="navigateToModule('reports')">
-        <div class="module-icon export">
-          <ion-icon name="download-outline"></ion-icon>
-        </div>
-        <ion-card-header>
-          <ion-card-title>Exportar Reportes</ion-card-title>
-          <ion-card-subtitle>CSV/PDF de inventario, ventas y pedidos</ion-card-subtitle>
-        </ion-card-header>
-      </ion-card>
-    </div>
+    <h2 class="section-title">MÃ³dulos del sistema</h2>
+    <ng-container *ngIf="modules$ | async as modules">
+      <p class="no-modules" *ngIf="modules.length === 0">
+        No tienes mÃ³dulos habilitados. Contacta al administrador para solicitar acceso.
+      </p>
+      <div class="modules-grid" *ngIf="modules.length > 0">
+        <ion-card
+          class="module-card"
+          *ngFor="let module of modules"
+          (click)="navigateToModule(module)"
+        >
+          <div class="module-icon" [ngClass]="module.cssClass">
+            <ion-icon [name]="module.icon"></ion-icon>
+          </div>
+          <ion-card-header>
+            <ion-card-title>{{ module.title }}</ion-card-title>
+            <ion-card-subtitle>{{ module.subtitle }}</ion-card-subtitle>
+          </ion-card-header>
+        </ion-card>
+      </div>
+    </ng-container>
   </div>
 
-  <!-- Actividad reciente -->
   <div class="recent-activity">
-    <h2 class="section-title">Actividad Reciente</h2>
+    <h2 class="section-title">Actividad reciente</h2>
     <ion-list>
       <ion-item *ngFor="let activity of recentActivities">
         <ion-icon [name]="activity.icon" slot="start" [color]="activity.color"></ion-icon>
@@ -170,8 +105,10 @@
       </ion-item>
     </ion-list>
   </div>
+
   <ion-refresher slot="fixed" (ionRefresh)="loadDashboardData(); $event.target.complete()">
     <ion-refresher-content pullingText="Desliza para refrescar"></ion-refresher-content>
   </ion-refresher>
-
 </ion-content>
+
+

@@ -1,4 +1,4 @@
-﻿import { NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { RouterModule, Routes, PreloadAllModules } from '@angular/router';
 import { AuthGuard } from './guards/auth.guard';
 
@@ -7,11 +7,49 @@ const routes: Routes = [
   { path: 'home',  canActivate: [AuthGuard], loadComponent: () => import('./home/home.page').then(m => m.HomePage) },
   { path: 'forgot-password', loadComponent: () => import('./pages/forgot-password/forgot-password.page').then(m => m.ForgotPasswordPage) },
   { path: 'reset-password', loadComponent: () => import('./pages/reset-password/reset-password.page').then(m => m.ResetPasswordPage) },
-  { path: 'inventory', canActivate: [AuthGuard], loadChildren: () => import('./modules/inventory/inventory.module').then(m => m.InventoryModule) },
-  { path: 'orders', canActivate: [AuthGuard], loadChildren: () => import('./modules/purchase-orders/purchase-orders.module').then(m => m.PurchaseOrdersModule) },
-  { path: 'alerts', canActivate: [AuthGuard], loadComponent: () => import('./modules/alerts/pages/list/alerts-list.page').then(m => m.AlertsListPage) },
-  { path: 'sales-import', canActivate: [AuthGuard], loadComponent: () => import('./pages/sales-import/sales-import.page').then(m => m.SalesImportPage) },
-  { path: 'reports', canActivate: [AuthGuard], loadComponent: () => import('./pages/reports/reports.page').then(m => m.ReportsPage) },
+  {
+    path: 'inventory',
+    // TODO: Re-enable PermissionGuard when role-based access is required again.
+    // canActivate: [AuthGuard, PermissionGuard],
+    loadChildren: () => import('./modules/inventory/inventory.module').then(m => m.InventoryModule),
+    canActivate: [AuthGuard],
+  },
+  {
+    path: 'orders',
+    // canActivate: [AuthGuard, PermissionGuard],
+    loadChildren: () => import('./modules/purchase-orders/purchase-orders.module').then(m => m.PurchaseOrdersModule),
+    canActivate: [AuthGuard],
+  },
+  {
+    path: 'alerts',
+    // canActivate: [AuthGuard, PermissionGuard],
+    loadComponent: () => import('./modules/alerts/pages/list/alerts-list.page').then(m => m.AlertsListPage),
+    canActivate: [AuthGuard],
+  },
+  {
+    path: 'users',
+    // canActivate: [AuthGuard, PermissionGuard],
+    loadChildren: () => import('./modules/users/users.module').then(m => m.UsersModule),
+    canActivate: [AuthGuard],
+  },
+  {
+    path: 'roles',
+    // canActivate: [AuthGuard, PermissionGuard],
+    loadChildren: () => import('./modules/roles/roles.module').then(m => m.RolesModule),
+    canActivate: [AuthGuard],
+  },
+  {
+    path: 'sales-import',
+    // canActivate: [AuthGuard, PermissionGuard],
+    loadComponent: () => import('./pages/sales-import/sales-import.page').then(m => m.SalesImportPage),
+    canActivate: [AuthGuard],
+  },
+  {
+    path: 'reports',
+    // canActivate: [AuthGuard, PermissionGuard],
+    loadComponent: () => import('./pages/reports/reports.page').then(m => m.ReportsPage),
+    canActivate: [AuthGuard],
+  },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 ];
 
@@ -20,3 +58,4 @@ const routes: Routes = [
   exports: [RouterModule],
 })
 export class AppRoutingModule {}
+

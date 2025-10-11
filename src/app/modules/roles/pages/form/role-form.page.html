@@ -1,0 +1,104 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="../"></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{ isEdit ? 'Editar rol' : 'Nuevo rol' }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button color="primary" (click)="submit()" [disabled]="saving">
+        <ion-icon slot="start" name="save-outline"></ion-icon>
+        Guardar
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <form [formGroup]="form" (ngSubmit)="submit()" class="form">
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Datos generales</ion-card-title>
+        <ion-card-subtitle>Definición del rol y descripción</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-item>
+          <ion-label position="stacked">Código</ion-label>
+          <ion-input formControlName="code" placeholder="ADMIN" [disabled]="isProtected"></ion-input>
+        </ion-item>
+        <ion-note color="danger" *ngIf="form.controls.code.touched && form.controls.code.invalid">
+          El código es obligatorio y solo puede contener letras mayúsculas, números o guiones bajos.
+        </ion-note>
+
+        <ion-item>
+          <ion-label position="stacked">Nombre</ion-label>
+          <ion-input formControlName="name" placeholder="Administrador"></ion-input>
+        </ion-item>
+        <ion-note color="danger" *ngIf="form.controls.name.touched && form.controls.name.invalid">
+          El nombre es obligatorio.
+        </ion-note>
+
+        <ion-item>
+          <ion-label position="stacked">Descripción</ion-label>
+          <ion-textarea formControlName="description" autoGrow="true"></ion-textarea>
+        </ion-item>
+        <ion-note color="danger" *ngIf="form.controls.description.touched && form.controls.description.invalid">
+          La descripción es obligatoria.
+        </ion-note>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Permisos</ion-card-title>
+        <ion-card-subtitle>Selecciona los permisos que aplican al rol.</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        <div class="permissions-group" *ngFor="let group of permissionGroups">
+          <h3>{{ group.label }}</h3>
+          <ion-item lines="none" *ngFor="let action of group.actions">
+            <ion-checkbox
+              slot="start"
+              [checked]="isPermissionSelected(action.id)"
+              (ionChange)="togglePermission(action.id, $event.detail.checked)"
+            ></ion-checkbox>
+            <ion-label>
+              <strong>{{ action.label }}</strong>
+              <p *ngIf="action.description">{{ action.description }}</p>
+              <ion-note color="medium">{{ action.id }}</ion-note>
+            </ion-label>
+          </ion-item>
+        </div>
+        <ion-note color="danger" *ngIf="form.controls.permissions.touched && form.controls.permissions.invalid">
+          Debes seleccionar al menos un permiso.
+        </ion-note>
+      </ion-card-content>
+    </ion-card>
+
+    <div class="actions">
+      <ion-button expand="block" color="primary" type="submit" [disabled]="saving">Guardar</ion-button>
+      <ion-button
+        expand="block"
+        color="medium"
+        fill="clear"
+        type="button"
+        [disabled]="saving"
+        (click)="cancel()"
+      >
+        Cancelar
+      </ion-button>
+      <ion-button
+        expand="block"
+        color="danger"
+        type="button"
+        *ngIf="isEdit && !isProtected"
+        (click)="deleteRole()"
+        [disabled]="saving"
+      >
+        Eliminar
+      </ion-button>
+      <ion-note color="warning" *ngIf="isProtected">
+        Este rol es parte de la configuración base y no puede eliminarse.
+      </ion-note>
+    </div>
+  </form>
+</ion-content>

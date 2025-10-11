@@ -1,0 +1,88 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Gestión de usuarios</ion-title>
+    <ion-buttons slot="end" >
+      <ion-button color="primary" (click)="newUser()">
+        <ion-icon name="person-add-outline" slot="start"></ion-icon>
+        Nuevo
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-refresher slot="fixed" (ionRefresh)="refresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="state" *ngIf="loading">
+    <ion-spinner></ion-spinner>
+    <p>Cargando usuarios...</p>
+  </div>
+
+  <ion-card color="danger" *ngIf="!loading && error">
+    <ion-card-header>
+      <ion-card-title>Error</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <p>{{ error }}</p>
+      <ion-button expand="block" color="light" (click)="loadUsers()">Reintentar</ion-button>
+    </ion-card-content>
+  </ion-card>
+
+  <div class="state" *ngIf="!loading && !error && users.length === 0">
+    <ion-icon name="people-outline" size="large"></ion-icon>
+    <p>No hay usuarios registrados.</p>
+    <ion-button  (click)="newUser()">Crear usuario</ion-button>
+  </div>
+
+  <ion-list *ngIf="!loading && !error && users.length > 0">
+    <ion-item-sliding *ngFor="let user of users; trackBy: trackByUserId">
+      <ion-item>
+        <ion-label>
+          <h2>{{ user.fullName }}</h2>
+          <p>{{ user.email }}</p>
+          <ion-chip color="primary" *ngIf="user.roleName">
+            <ion-icon name="shield" color="light"></ion-icon>
+            <ion-label>{{ user.roleName }}</ion-label>
+          </ion-chip>
+          <ion-note color="medium">
+            {{ user.permissions?.join(', ') || 'Sin permisos configurados' }}
+          </ion-note>
+        </ion-label>
+        <ion-toggle
+          slot="end"
+          color="success"
+          [checked]="user.isActive"
+          (ionChange)="toggleActive(user, $event)"
+        >
+        </ion-toggle>
+        <ion-buttons slot="end" >
+          <ion-button fill="clear" color="primary" (click)="editUser(user)">
+            <ion-icon slot="icon-only" name="create-outline"></ion-icon>
+          </ion-button>
+          <ion-button
+            fill="clear"
+            color="danger"
+            [disabled]="user.id === currentUserId"
+            (click)="confirmDelete(user)"
+          >
+            <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-item>
+
+      <ion-item-options side="end" >
+        <ion-item-option color="primary" (click)="editUser(user)">Editar</ion-item-option>
+        <ion-item-option
+          color="danger"
+          [disabled]="user.id === currentUserId"
+          (click)="confirmDelete(user)"
+        >
+          Eliminar
+        </ion-item-option>
+      </ion-item-options>
+    </ion-item-sliding>
+  </ion-list>
+</ion-content>
+

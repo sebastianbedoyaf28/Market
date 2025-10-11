@@ -1,0 +1,87 @@
+﻿<ion-header>
+ <ion-toolbar>
+  <ion-title>Gestion de roles</ion-title>
+  <ion-buttons slot="end" >
+   <ion-button color="primary" (click)="newRole()">
+    <ion-icon name="add" slot="start"></ion-icon>
+    Nuevo
+   </ion-button>
+  </ion-buttons>
+ </ion-toolbar>
+</ion-header>
+
+<ion-content>
+ <ion-refresher slot="fixed" (ionRefresh)="refresh($event)">
+  <ion-refresher-content></ion-refresher-content>
+ </ion-refresher>
+
+ <div class="state" *ngIf="loading">
+  <ion-spinner></ion-spinner>
+  <p>Cargando roles...</p>
+ </div>
+
+ <ion-card color="danger" *ngIf="!loading && error">
+  <ion-card-header>
+   <ion-card-title>Error</ion-card-title>
+  </ion-card-header>
+  <ion-card-content>
+   <p>{{ error }}</p>
+   <ion-button expand="block" color="light" (click)="loadRoles()">Reintentar</ion-button>
+  </ion-card-content>
+ </ion-card>
+
+ <div class="state" *ngIf="!loading && !error && roles.length === 0">
+  <ion-icon name="shield-outline" size="large"></ion-icon>
+  <p>No hay roles registrados.</p>
+  <ion-button (click)="newRole()">Crear rol</ion-button>
+ </div>
+
+ <ion-list *ngIf="!loading && !error && roles.length > 0">
+  <ion-item-sliding *ngFor="let role of roles; trackBy: trackByRoleId">
+   <ion-item lines="full">
+    <ion-label>
+     <h2>{{ role.name }}</h2>
+     <p>{{ role.description }}</p>
+     <ion-chip color="medium">
+      <ion-icon name="code-slash" color="dark"></ion-icon>
+      <ion-label>{{ role.code }}</ion-label>
+     </ion-chip>
+     <div class="permissions">
+      <ion-chip *ngFor="let permission of role.permissions" color="secondary">
+       <ion-label>{{ permission }}</ion-label>
+      </ion-chip>
+     </div>
+     <ion-note *ngIf="isProtected(role)" color="warning">
+      Rol protegido. No se puede eliminar.
+     </ion-note>
+    </ion-label>
+    <ion-buttons slot="end" >
+     <ion-button fill="clear" color="primary" (click)="editRole(role)">
+      <ion-icon slot="icon-only" name="create-outline"></ion-icon>
+     </ion-button>
+     <ion-button
+      fill="clear"
+      color="danger"
+      [disabled]="isProtected(role)"
+      (click)="confirmDelete(role)"
+     >
+      <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+     </ion-button>
+    </ion-buttons>
+   </ion-item>
+
+   <ion-item-options side="end" >
+    <ion-item-option color="primary" (click)="editRole(role)">Editar</ion-item-option>
+    <ion-item-option
+     color="danger"
+     [disabled]="isProtected(role)"
+     (click)="confirmDelete(role)"
+    >
+     Eliminar
+    </ion-item-option>
+   </ion-item-options>
+  </ion-item-sliding>
+ </ion-list>
+</ion-content>
+
+

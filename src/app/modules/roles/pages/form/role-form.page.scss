@@ -1,0 +1,37 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-bottom: 2rem;
+}
+
+.permissions-group {
+  margin-bottom: 1.25rem;
+
+  h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--ion-color-primary);
+  }
+
+  ion-item {
+    --inner-padding-end: 0;
+  }
+
+  ion-note {
+    font-size: 0.75rem;
+  }
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0 1rem 1rem;
+
+  ion-note {
+    text-align: center;
+  }
+}
+
