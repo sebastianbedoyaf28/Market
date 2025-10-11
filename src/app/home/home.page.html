@@ -69,10 +69,10 @@
   </div>
 
   <div class="modules-section">
-    <h2 class="section-title">MÃ³dulos del sistema</h2>
+    <h2 class="section-title">Módulos del sistema</h2>
     <ng-container *ngIf="modules$ | async as modules">
       <p class="no-modules" *ngIf="modules.length === 0">
-        No tienes mÃ³dulos habilitados. Contacta al administrador para solicitar acceso.
+        No tienes módulos habilitados. Contacta al administrador para solicitar acceso.
       </p>
       <div class="modules-grid" *ngIf="modules.length > 0">
         <ion-card

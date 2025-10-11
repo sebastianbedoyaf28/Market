@@ -25,6 +25,8 @@ import {
   IonBadge,
   IonList,
   IonItemDivider,
+  IonButtons,
+  IonBackButton,
   AlertController,
   LoadingController,
   ToastController
@@ -71,7 +73,9 @@ import { SalesImportService, ImportPreview, ImportResult } from '../../services/
     IonChip,
     IonBadge,
     IonList,
-    IonItemDivider
+    IonItemDivider,
+    IonButtons,
+    IonBackButton
   ]
 })
 export class SalesImportPage implements OnInit {

@@ -25,6 +25,8 @@ import {
   IonSpinner,
   IonChip,
   IonBadge,
+  IonButtons,
+  IonBackButton,
   LoadingController,
   ToastController,
   AlertController
@@ -73,7 +75,9 @@ import { ExportService, ExportOptions, ExportHistory } from '../../services/expo
     IonList,
     IonSpinner,
     IonChip,
-    IonBadge
+    IonBadge,
+    IonButtons,
+    IonBackButton
   ]
 })
 export class ReportsPage implements OnInit {
