@@ -32,7 +32,17 @@
               }
             ],
             "styles": ["src/global.scss", "src/theme/variables.scss"],
-            "scripts": []
+            "scripts": [],
+            "allowedCommonJsDependencies": [
+              "canvg",
+              "file-saver",
+              "papaparse",
+              "rgbcolor",
+              "raf",
+              "jspdf",
+              "jspdf-autotable",
+              "xlsx"
+            ]
           },
           "configurations": {
             "production": {

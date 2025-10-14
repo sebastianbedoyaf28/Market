@@ -284,3 +284,16 @@ do update
 set name = excluded.name,
     description = excluded.description,
     permissions = excluded.permissions;
+
+-- ============================================
+-- Habilitar Realtime para actualizaciones en tiempo real
+-- ============================================
+
+-- Habilitar Realtime en las tablas principales para el dashboard
+alter publication supabase_realtime add table public.products;
+alter publication supabase_realtime add table public.carts;
+alter publication supabase_realtime add table public.cart_items;
+alter publication supabase_realtime add table public.inventory_products;
+alter publication supabase_realtime add table public.purchase_orders;
+alter publication supabase_realtime add table public.purchase_order_items;
+alter publication supabase_realtime add table public.sales;

@@ -1,4 +1,4 @@
-﻿import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, ToastController, MenuController } from '@ionic/angular';
 import { Router } from '@angular/router';
@@ -8,6 +8,7 @@ import { CartService } from '../services/cart.service';
 import { AuthService } from '../services/auth.service';
 import { InventoryService } from '../modules/inventory/services/inventory.service';
 import { supabase } from '../core/supabase-client';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 interface RecentActivity {
   icon: string;
@@ -39,7 +40,7 @@ interface ModuleWithAccess extends ModuleCard {
   templateUrl: './home.page.html',
   styleUrls: ['./home.page.scss'],
 })
-export class HomePage implements OnInit {
+export class HomePage implements OnInit, OnDestroy {
   products$!: Observable<Product[]>;
   loading = false;
 
@@ -47,6 +48,9 @@ export class HomePage implements OnInit {
   pendingOrders = 0;
   todaySales = 0;
   alertCount = 0;
+
+  // Canales de subscripción en tiempo real
+  private realtimeChannels: RealtimeChannel[] = [];
 
   readonly moduleCards: ModuleCard[] = [
     {
@@ -68,13 +72,13 @@ export class HomePage implements OnInit {
       permissions: ['orders:read'],
     },
     {
-      id: 'sales',
+      id: 'pos',
       title: 'Punto de Venta',
-      subtitle: 'Registro de ventas',
+      subtitle: 'Registro de ventas en tiempo real',
       icon: 'card-outline',
       cssClass: 'sales',
-      route: '',
-      permissions: ['sales:import'],
+      route: '/pos',
+      permissions: ['sales:write'],
     },
     {
       id: 'alerts',
@@ -104,9 +108,18 @@ export class HomePage implements OnInit {
       permissions: ['reports:write'],
     },
     {
+      id: 'sales-history',
+      title: 'Historial de Ventas',
+      subtitle: 'Consulta y análisis de ventas (RF007)',
+      icon: 'receipt-outline',
+      cssClass: 'sales',
+      route: '/sales',
+      permissions: ['sales:read'],
+    },
+    {
       id: 'sales-import',
       title: 'Importar ventas',
-      subtitle: 'CSV/Excel desde sistemas externos',
+      subtitle: 'CSV/Excel desde sistemas externos (RF006)',
       icon: 'cloud-upload-outline',
       cssClass: 'import',
       route: '/sales-import',
@@ -180,6 +193,415 @@ export class HomePage implements OnInit {
 
   ngOnInit(): void {
     this.loadDashboardData();
+    this.setupRealtimeSubscriptions();
+  }
+
+  ngOnDestroy(): void {
+    // Limpiar todas las subscripciones de realtime
+    this.realtimeChannels.forEach(channel => {
+      supabase().removeChannel(channel);
+    });
+    this.realtimeChannels = [];
+  }
+
+  private setupRealtimeSubscriptions(): void {
+    console.log('[Realtime] Configurando subscripciones...');
+    const sb = supabase();
+
+    // Subscripción a cambios en productos
+    const productsChannel = sb
+      .channel('products-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'products' },
+        (payload) => {
+          console.log('[Realtime] Cambio en products:', payload);
+          this.updateRecentActivities();
+        }
+      )
+      .subscribe((status) => {
+        console.log('[Realtime] Canal products:', status);
+      });
+
+    // Subscripción a cambios en carritos (pedidos)
+    const cartsChannel = sb
+      .channel('carts-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'carts' },
+        (payload) => {
+          console.log('[Realtime] Cambio en carts:', payload);
+          this.updateRecentActivities();
+          this.updateMetrics();
+        }
+      )
+      .subscribe((status) => {
+        console.log('[Realtime] Canal carts:', status);
+      });
+
+    // Subscripción a cambios en items de carritos
+    const cartItemsChannel = sb
+      .channel('cart-items-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'cart_items' },
+        (payload) => {
+          console.log('[Realtime] Cambio en cart_items:', payload);
+          this.updateRecentActivities();
+          this.updateMetrics();
+        }
+      )
+      .subscribe((status) => {
+        console.log('[Realtime] Canal cart_items:', status);
+      });
+
+    // Subscripción a cambios en productos de inventario
+    const inventoryChannel = sb
+      .channel('inventory-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'inventory_products' },
+        (payload) => {
+          console.log('[Realtime] Cambio en inventory_products:', payload);
+          this.updateRecentActivities();
+          this.updateMetrics();
+        }
+      )
+      .subscribe((status) => {
+        console.log('[Realtime] Canal inventory_products:', status);
+      });
+
+    // Subscripción a cambios en órdenes de compra (GESTIÓN DE PEDIDOS)
+    const purchaseOrdersChannel = sb
+      .channel('purchase-orders-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'purchase_orders' },
+        (payload) => {
+          console.log('[Realtime] ✨ Cambio en purchase_orders (GESTIÓN DE PEDIDOS):', payload);
+          this.updateRecentActivities();
+          this.updateMetrics();
+        }
+      )
+      .subscribe((status) => {
+        console.log('[Realtime] Canal purchase_orders:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('[Realtime] ✅ Canal de gestión de pedidos ACTIVO');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('[Realtime] ❌ ERROR: Canal de gestión de pedidos falló. Verifica que Realtime esté habilitado en Supabase.');
+        }
+      });
+
+    // Subscripción a cambios en items de órdenes de compra
+    const purchaseOrderItemsChannel = sb
+      .channel('purchase-order-items-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'purchase_order_items' },
+        (payload) => {
+          console.log('[Realtime] ✨ Cambio en purchase_order_items:', payload);
+          this.updateRecentActivities();
+          this.updateMetrics();
+        }
+      )
+      .subscribe((status) => {
+        console.log('[Realtime] Canal purchase_order_items:', status);
+      });
+
+    // Subscripción a cambios en ventas
+    const salesChannel = sb
+      .channel('sales-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'sales' },
+        (payload) => {
+          console.log('[Realtime] Cambio en sales:', payload);
+          this.updateRecentActivities();
+          this.updateMetrics();
+        }
+      )
+      .subscribe((status) => {
+        console.log('[Realtime] Canal sales:', status);
+      });
+
+    this.realtimeChannels = [
+      productsChannel,
+      cartsChannel,
+      cartItemsChannel,
+      inventoryChannel,
+      purchaseOrdersChannel,
+      purchaseOrderItemsChannel,
+      salesChannel
+    ];
+
+    console.log('[Realtime] ✅ Configuración completa - 7 canales iniciados');
+    console.log('[Realtime] 📝 Para que funcione, ejecuta el script SQL en Supabase (ver DIAGNOSTICO_REALTIME.md)');
+  }
+
+  private async updateRecentActivities(): Promise<void> {
+    try {
+      const allActivities: RecentActivity[] = [];
+      
+      // 1. Actividades de productos
+      try {
+        const { data: products } = await supabase()
+          .from('products')
+          .select('id, name, created_at')
+          .order('created_at', { ascending: false })
+          .limit(5);
+        
+        (products || []).forEach((row: any) => {
+          allActivities.push({
+            icon: 'add-circle-outline',
+            title: 'Nuevo producto',
+            description: `${row.name || 'Producto'} agregado`,
+            time: this.relativeTime(row.created_at),
+            color: 'success',
+          });
+        });
+      } catch (error) {
+        console.error('Error cargando productos recientes:', error);
+      }
+
+      // 2. Actividades de inventario
+      try {
+        const { data: inventory } = await supabase()
+          .from('inventory_products')
+          .select('id, name, created_at')
+          .order('created_at', { ascending: false })
+          .limit(5);
+        
+        (inventory || []).forEach((row: any) => {
+          allActivities.push({
+            icon: 'archive-outline',
+            title: 'Inventario',
+            description: `${row.name || 'Producto'} registrado`,
+            time: this.relativeTime(row.created_at),
+            color: 'success',
+          });
+        });
+      } catch (error) {
+        console.error('Error cargando inventario reciente:', error);
+      }
+
+      // 3. Actividades de carritos (pedidos)
+      try {
+        const { data: carts } = await supabase()
+          .from('carts')
+          .select('id, status, created_at')
+          .order('created_at', { ascending: false })
+          .limit(5);
+        
+        (carts || []).forEach((row: any) => {
+          const isOrdered = row.status === 'ordered';
+          allActivities.push({
+            icon: isOrdered ? 'receipt-outline' : 'cart-outline',
+            title: isOrdered ? 'Pedido confirmado' : 'Carrito creado',
+            description: `Pedido ${row.id.slice(0, 8)}... ${isOrdered ? 'confirmado' : 'creado'}`,
+            time: this.relativeTime(row.created_at),
+            color: isOrdered ? 'primary' : 'medium',
+          });
+        });
+      } catch (error) {
+        console.error('Error cargando carritos recientes:', error);
+      }
+
+      // 4. Actividades de items de carritos
+      try {
+        const { data: cartItems } = await supabase()
+          .from('cart_items')
+          .select(`
+            id, 
+            qty, 
+            created_at,
+            product_id,
+            products (name)
+          `)
+          .order('created_at', { ascending: false })
+          .limit(5);
+        
+        (cartItems || []).forEach((row: any) => {
+          const productName = row.products?.name || 'Producto';
+          allActivities.push({
+            icon: 'cart-outline',
+            title: 'Item agregado al carrito',
+            description: `${row.qty}x ${productName}`,
+            time: this.relativeTime(row.created_at),
+            color: 'primary',
+          });
+        });
+      } catch (error) {
+        console.error('Error cargando items de carrito:', error);
+      }
+
+      // 5. Actividades de órdenes de compra
+      try {
+        const { data: orders } = await supabase()
+          .from('purchase_orders')
+          .select(`
+            id, 
+            status, 
+            expected_date, 
+            created_at,
+            suppliers (name)
+          `)
+          .order('created_at', { ascending: false })
+          .limit(5);
+        
+        (orders || []).forEach((row: any) => {
+          const supplierName = row.suppliers?.name || 'Proveedor';
+          let statusText = '';
+          let statusColor: 'primary' | 'success' | 'warning' | 'danger' | 'medium' = 'medium';
+          
+          switch (row.status) {
+            case 'DRAFT':
+              statusText = 'borrador';
+              statusColor = 'medium';
+              break;
+            case 'SENT':
+              statusText = 'enviada';
+              statusColor = 'primary';
+              break;
+            case 'RECEIVED':
+              statusText = 'recibida';
+              statusColor = 'success';
+              break;
+            case 'CANCELLED':
+              statusText = 'cancelada';
+              statusColor = 'danger';
+              break;
+            default:
+              statusText = row.status.toLowerCase();
+          }
+          
+          allActivities.push({
+            icon: 'document-text-outline',
+            title: `Orden de compra ${statusText}`,
+            description: `${supplierName} - ${row.id.slice(0, 8)}...`,
+            time: this.relativeTime(row.created_at),
+            color: statusColor,
+          });
+        });
+      } catch (error) {
+        console.error('Error cargando órdenes de compra:', error);
+      }
+
+      // 6. Actividades de items de órdenes de compra
+      try {
+        const { data: orderItems } = await supabase()
+          .from('purchase_order_items')
+          .select(`
+            id, 
+            quantity_ordered, 
+            quantity_received,
+            created_at,
+            inventory_products (name)
+          `)
+          .order('created_at', { ascending: false })
+          .limit(5);
+        
+        (orderItems || []).forEach((row: any) => {
+          const productName = row.inventory_products?.name || 'Producto';
+          const received = row.quantity_received > 0;
+          
+          allActivities.push({
+            icon: received ? 'checkmark-circle-outline' : 'cube-outline',
+            title: received ? 'Pedido recibido' : 'Item ordenado',
+            description: received 
+              ? `${row.quantity_received}/${row.quantity_ordered} ${productName} recibido`
+              : `${row.quantity_ordered}x ${productName} ordenado`,
+            time: this.relativeTime(row.created_at),
+            color: received ? 'success' : 'primary',
+          });
+        });
+      } catch (error) {
+        console.error('Error cargando items de órdenes:', error);
+      }
+
+      // 7. Actividades de ventas
+      try {
+        const { data: sales } = await supabase()
+          .from('sales')
+          .select(`
+            id, 
+            quantity, 
+            total_price,
+            sale_date,
+            products (name)
+          `)
+          .order('sale_date', { ascending: false })
+          .limit(5);
+        
+        (sales || []).forEach((row: any) => {
+          const productName = row.products?.name || 'Producto';
+          allActivities.push({
+            icon: 'cash-outline',
+            title: 'Venta registrada',
+            description: `${row.quantity}x ${productName} - $${Number(row.total_price).toFixed(2)}`,
+            time: this.relativeTime(row.sale_date),
+            color: 'success',
+          });
+        });
+      } catch (error) {
+        console.error('Error cargando ventas recientes:', error);
+      }
+
+      // Ordenar todas las actividades por tiempo (más recientes primero)
+      allActivities.sort((a, b) => {
+        // Convertir tiempo relativo a timestamp para ordenar correctamente
+        const getTimestamp = (timeStr: string): number => {
+          if (timeStr === 'ahora') return Date.now();
+          const match = timeStr.match(/(\d+)\s*(min|h|d)/);
+          if (!match) return 0;
+          const value = parseInt(match[1]);
+          const unit = match[2];
+          const now = Date.now();
+          if (unit === 'min') return now - value * 60000;
+          if (unit === 'h') return now - value * 3600000;
+          if (unit === 'd') return now - value * 86400000;
+          return 0;
+        };
+        return getTimestamp(b.time) - getTimestamp(a.time);
+      });
+
+      // Tomar solo las 10 más recientes
+      this.recentActivities = allActivities.slice(0, 10);
+    } catch (error) {
+      console.error('Error actualizando actividades recientes:', error);
+    }
+  }
+
+  private async updateMetrics(): Promise<void> {
+    try {
+      // Actualizar inventario
+      const inventoryItems = await firstValueFrom(this.inventory.list());
+      this.totalProducts = inventoryItems.length;
+
+      // Actualizar alertas
+      try {
+        const now = Date.now();
+        const in30d = now + 30 * 24 * 60 * 60 * 1000;
+        const lowOrOut = inventoryItems.filter(p => p.status === 'LOW' || p.status === 'OUT').length;
+        const expiringSoon = inventoryItems.filter(p => {
+          if (!p.nextExpiryDate) {
+            return false;
+          }
+          const t = new Date(p.nextExpiryDate).getTime();
+          return t <= in30d && t >= now && (p.totalStock ?? 0) > 0;
+        }).length;
+        this.alertCount = lowOrOut + expiringSoon;
+      } catch {
+        this.alertCount = 0;
+      }
+
+      // Actualizar pedidos pendientes
+      this.pendingOrders = await this.carts.countPendingOrders().catch(() => 0);
+      
+      // Actualizar ventas del día
+      this.todaySales = await this.carts.sumTodaySales().catch(() => 0);
+    } catch (error) {
+      console.error('Error actualizando métricas:', error);
+    }
   }
 
   async loadDashboardData() {
@@ -246,6 +668,9 @@ export class HomePage implements OnInit {
       case 'orders':
         this.router.navigateByUrl('/orders');
         return;
+      case 'sales-history':
+        this.router.navigateByUrl('/sales');
+        return;
       case 'sales-import':
         this.router.navigateByUrl('/sales-import');
         return;
@@ -261,6 +686,9 @@ export class HomePage implements OnInit {
         return;
       case 'roles':
         this.router.navigateByUrl('/roles');
+        return;
+      case 'pos':
+        this.router.navigateByUrl('/pos');
         return;
       case 'sales':
         void this.showToast('Modulo de punto de venta en construccion.', 'primary');

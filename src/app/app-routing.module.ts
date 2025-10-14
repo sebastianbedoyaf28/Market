@@ -39,7 +39,20 @@ const routes: Routes = [
     canActivate: [AuthGuard],
   },
   {
+    path: 'pos',
+    // Punto de Ventas - Integrado con RF006/RF007
+    loadChildren: () => import('./modules/pos/pos.module').then(m => m.POSModule),
+    canActivate: [AuthGuard],
+  },
+  {
+    path: 'sales',
+    // RF007 - Historial de Ventas y Reportes
+    loadChildren: () => import('./modules/sales/sales.module').then(m => m.SalesModule),
+    canActivate: [AuthGuard],
+  },
+  {
     path: 'sales-import',
+    // RF006 - Importación de Ventas Externas
     // canActivate: [AuthGuard, PermissionGuard],
     loadComponent: () => import('./pages/sales-import/sales-import.page').then(m => m.SalesImportPage),
     canActivate: [AuthGuard],
