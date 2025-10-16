@@ -10,7 +10,6 @@ export const supabase = (): SupabaseClient => {
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
-        // (sin multiTab)
       },
     });
   }

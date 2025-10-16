@@ -12,7 +12,7 @@ export interface PurchaseOrderItem {
   name?: string;
   quantityOrdered: number; // > 0
   quantityReceived?: number; // 0..=quantityOrdered
-  unitCost?: number; // opcional
+  unitCost?: number; // Costo unitario del producto
 }
 
 export interface PurchaseOrder {

@@ -36,7 +36,7 @@ export class SalesService {
         user_id,
         created_at,
         updated_at,
-        products (id, name, sku)
+        inventory_products!inner (id, name, sku)
       `)
       .order('sale_date', { ascending: false });
 
@@ -94,7 +94,7 @@ export class SalesService {
         user_id,
         created_at,
         updated_at,
-        products (id, name, sku)
+        inventory_products!inner (id, name, sku)
       `)
       .eq('id', id)
       .maybeSingle();
@@ -160,7 +160,7 @@ export class SalesService {
         user_id,
         created_at,
         updated_at,
-        products (id, name, sku)
+        inventory_products!inner (id, name, sku)
       `)
       .single();
 
@@ -220,7 +220,7 @@ export class SalesService {
         user_id,
         created_at,
         updated_at,
-        products (id, name, sku)
+        inventory_products!inner (id, name, sku)
       `)
       .single();
 
@@ -359,8 +359,8 @@ export class SalesService {
     return {
       id: row.id,
       productId: row.product_id,
-      productName: row.products?.name,
-      productSku: row.products?.sku,
+      productName: row.inventory_products?.name,
+      productSku: row.inventory_products?.sku,
       quantity: row.quantity,
       unitPrice: Number(row.unit_price),
       totalPrice: Number(row.total_price),

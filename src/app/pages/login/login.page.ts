@@ -31,11 +31,6 @@ export class LoginPage implements OnInit {
   ) {}
 
   ngOnInit() {
-    // Si ya hay sesión, ve directo a home
-    // (quita esto si prefieres forzar pasar por la pantalla)
-    // this.auth.session$.subscribe(s => { if (s) this.router.navigateByUrl('/home', { replaceUrl: true }); });
-
-    // Si regresa con link OTP expirado o inválido, informa
     const hash = window.location.hash;
     if (hash.includes('otp_expired') || hash.includes('invalid')) {
       this.error = 'El enlace de acceso ya no es válido. Solicita uno nuevo.';
@@ -43,7 +38,6 @@ export class LoginPage implements OnInit {
     }
   }
 
-  // ===== Bloqueo local por intentos =====
   private lockKey(email: string) { return `login-lock:${email}`; }
   private attemptsKey(email: string) { return `login-attempts:${email}`; }
 
@@ -66,7 +60,6 @@ export class LoginPage implements OnInit {
     localStorage.removeItem(this.attemptsKey(email));
     localStorage.removeItem(this.lockKey(email));
   }
-  // =====================================
 
   async emailPasswordSignIn() {
     if (this.form.invalid) { this.tocarTodo(); return; }

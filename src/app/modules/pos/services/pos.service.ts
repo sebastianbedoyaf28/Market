@@ -27,8 +27,8 @@ export class POSService {
       .select('id, name, sku, sale_price, total_stock')
       .gt('sale_price', 0); // Solo productos con precio de venta
 
-    // Filtrar por stock solo si el campo existe
-    supaQuery = supaQuery.or('total_stock.gt.0,total_stock.is.null');
+    // Filtrar por stock disponible (mayor que 0)
+    supaQuery = supaQuery.gt('total_stock', 0);
 
     if (query.trim()) {
       supaQuery = supaQuery.or(`name.ilike.%${query}%,sku.ilike.%${query}%`);
@@ -59,8 +59,8 @@ export class POSService {
       .select('id, name, sku, sale_price, total_stock, category')
       .gt('sale_price', 0); // Solo productos con precio de venta
 
-    // Filtrar por stock solo si el campo existe
-    query = query.or('total_stock.gt.0,total_stock.is.null');
+    // Filtrar por stock disponible (mayor que 0)
+    query = query.gt('total_stock', 0);
 
     if (category) {
       query = query.eq('category', category);
