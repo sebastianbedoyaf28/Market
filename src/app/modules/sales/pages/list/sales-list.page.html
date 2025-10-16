@@ -1,0 +1,226 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Historial de Ventas</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="openFilterModal()">
+        <ion-icon name="filter-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+
+  <!-- Barra de búsqueda -->
+  <ion-toolbar>
+    <ion-searchbar
+      [(ngModel)]="searchTerm"
+      (ionInput)="onSearchChange($event)"
+      placeholder="Buscar por producto, cliente, factura..."
+      debounce="300">
+    </ion-searchbar>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <!-- Refrescar -->
+  <ion-refresher slot="fixed" (ionRefresh)="loadSales($event)">
+    <ion-refresher-content pullingText="Desliza para refrescar"></ion-refresher-content>
+  </ion-refresher>
+
+  <!-- Resumen de ventas -->
+  <ion-card *ngIf="summary" class="summary-card">
+    <ion-card-header>
+      <ion-card-title>Resumen</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-grid>
+        <ion-row>
+          <ion-col size="6">
+            <div class="summary-item">
+              <div class="summary-label">Total Ventas</div>
+              <div class="summary-value">{{ summary.totalSales }}</div>
+            </div>
+          </ion-col>
+          <ion-col size="6">
+            <div class="summary-item">
+              <div class="summary-label">Monto Total</div>
+              <div class="summary-value">{{ formatCurrency(summary.totalAmount) }}</div>
+            </div>
+          </ion-col>
+        </ion-row>
+        <ion-row>
+          <ion-col size="6">
+            <div class="summary-item">
+              <div class="summary-label">Cantidad Total</div>
+              <div class="summary-value">{{ summary.totalQuantity }}</div>
+            </div>
+          </ion-col>
+          <ion-col size="6">
+            <div class="summary-item">
+              <div class="summary-label">Por Estado</div>
+              <div class="summary-chips">
+                <ion-chip color="warning" *ngIf="summary.byStatus.pending > 0">
+                  <ion-label>Pend: {{ summary.byStatus.pending }}</ion-label>
+                </ion-chip>
+                <ion-chip color="success" *ngIf="summary.byStatus.reconciled > 0">
+                  <ion-label>Conc: {{ summary.byStatus.reconciled }}</ion-label>
+                </ion-chip>
+              </div>
+            </div>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+
+      <!-- Botones de exportación -->
+      <ion-grid class="export-buttons">
+        <ion-row>
+          <ion-col size="6">
+            <ion-button expand="block" fill="outline" (click)="exportCSV()">
+              <ion-icon name="download-outline" slot="start"></ion-icon>
+              CSV
+            </ion-button>
+          </ion-col>
+          <ion-col size="6">
+            <ion-button expand="block" fill="outline" (click)="exportPDF()">
+              <ion-icon name="download-outline" slot="start"></ion-icon>
+              PDF
+            </ion-button>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Filtros activos -->
+  <div class="active-filters" *ngIf="filters.dateFrom || filters.dateTo || filters.status !== 'all' || filters.importSource !== 'all'">
+    <ion-chip color="primary" (click)="clearFilters()">
+      <ion-label>Limpiar filtros</ion-label>
+      <ion-icon name="close-circle-outline"></ion-icon>
+    </ion-chip>
+    <ion-chip *ngIf="filters.dateFrom">
+      <ion-label>Desde: {{ formatDate(filters.dateFrom!) }}</ion-label>
+    </ion-chip>
+    <ion-chip *ngIf="filters.dateTo">
+      <ion-label>Hasta: {{ formatDate(filters.dateTo!) }}</ion-label>
+    </ion-chip>
+    <ion-chip *ngIf="filters.status !== 'all'">
+      <ion-label>Estado: {{ filters.status }}</ion-label>
+    </ion-chip>
+  </div>
+
+  <!-- Lista de ventas -->
+  <ion-list *ngIf="!isLoading">
+    <ion-item *ngFor="let sale of filteredSales" button (click)="viewDetail(sale)">
+      <ion-label>
+        <h2>
+          <strong>{{ sale.productName || 'Producto desconocido' }}</strong>
+          <ion-badge [color]="getStatusColor(sale.status)" style="margin-left: 8px;">
+            {{ sale.status }}
+          </ion-badge>
+        </h2>
+        <p>
+          <ion-icon [name]="getImportSourceIcon(sale.importSource)" style="vertical-align: middle;"></ion-icon>
+          {{ formatDate(sale.saleDate) }}
+          <span *ngIf="sale.invoiceNumber"> • Factura: {{ sale.invoiceNumber }}</span>
+        </p>
+        <p *ngIf="sale.customerName">Cliente: {{ sale.customerName }}</p>
+        <h3>
+          Cantidad: {{ sale.quantity }} • Total: {{ formatCurrency(sale.totalPrice) }}
+        </h3>
+      </ion-label>
+      <ion-button fill="clear" slot="end" (click)="viewDetail(sale); $event.stopPropagation()">
+        <ion-icon name="eye-outline"></ion-icon>
+      </ion-button>
+      <ion-button fill="clear" color="danger" slot="end" (click)="deleteSale(sale); $event.stopPropagation()">
+        <ion-icon name="trash-outline"></ion-icon>
+      </ion-button>
+    </ion-item>
+  </ion-list>
+
+  <!-- Estado vacío -->
+  <div class="empty-state" *ngIf="!isLoading && filteredSales.length === 0">
+    <ion-icon name="receipt-outline"></ion-icon>
+    <h2>No hay ventas</h2>
+    <p>No se encontraron ventas con los filtros seleccionados.</p>
+  </div>
+
+  <!-- Cargando -->
+  <div class="loading-state" *ngIf="isLoading">
+    <ion-spinner></ion-spinner>
+    <p>Cargando ventas...</p>
+  </div>
+
+  <!-- Modal de filtros -->
+  <ion-modal [isOpen]="showFilterModal" (didDismiss)="closeFilterModal()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Filtros</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeFilterModal()">Cerrar</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content>
+        <ion-list>
+          <!-- Fecha desde -->
+          <ion-item>
+            <ion-label position="stacked">Fecha Desde</ion-label>
+            <input type="date" [(ngModel)]="filters.dateFrom" class="date-input" />
+          </ion-item>
+
+          <!-- Fecha hasta -->
+          <ion-item>
+            <ion-label position="stacked">Fecha Hasta</ion-label>
+            <input type="date" [(ngModel)]="filters.dateTo" class="date-input" />
+          </ion-item>
+
+          <!-- Estado -->
+          <ion-item>
+            <ion-label position="stacked">Estado</ion-label>
+            <ion-select [(ngModel)]="filters.status" interface="popover">
+              <ion-select-option value="all">Todos</ion-select-option>
+              <ion-select-option value="pending">Pendiente</ion-select-option>
+              <ion-select-option value="reconciled">Conciliada</ion-select-option>
+              <ion-select-option value="cancelled">Anulada</ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <!-- Origen de importación -->
+          <ion-item>
+            <ion-label position="stacked">Origen</ion-label>
+            <ion-select [(ngModel)]="filters.importSource" interface="popover">
+              <ion-select-option value="all">Todos</ion-select-option>
+              <ion-select-option value="manual">Manual</ion-select-option>
+              <ion-select-option value="csv_excel_import">CSV/Excel</ion-select-option>
+              <ion-select-option value="pos_system">Sistema POS</ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <!-- Nombre de cliente -->
+          <ion-item>
+            <ion-label position="stacked">Cliente</ion-label>
+            <ion-input [(ngModel)]="filters.customerName" placeholder="Nombre del cliente"></ion-input>
+          </ion-item>
+
+          <!-- Número de factura -->
+          <ion-item>
+            <ion-label position="stacked">Número de Factura</ion-label>
+            <ion-input [(ngModel)]="filters.invoiceNumber" placeholder="Ej: FAC-001"></ion-input>
+          </ion-item>
+        </ion-list>
+
+        <div class="filter-actions">
+          <ion-button expand="block" (click)="applyFilters()">
+            Aplicar Filtros
+          </ion-button>
+          <ion-button expand="block" fill="outline" (click)="clearFilters()">
+            Limpiar
+          </ion-button>
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+</ion-content>
+

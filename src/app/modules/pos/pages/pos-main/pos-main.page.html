@@ -1,0 +1,226 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Punto de Venta</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="openCheckout()" [disabled]="!cart || cart.items.length === 0">
+        <ion-badge color="danger" *ngIf="getCartItemsCount() > 0">{{ getCartItemsCount() }}</ion-badge>
+        <ion-icon name="cart-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+
+  <!-- Barra de búsqueda -->
+  <ion-toolbar>
+    <ion-searchbar
+      [(ngModel)]="searchTerm"
+      (ionInput)="searchProducts($event)"
+      placeholder="Buscar producto por nombre o SKU..."
+      debounce="300">
+    </ion-searchbar>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="pos-content">
+  <div class="pos-layout">
+    <!-- Lista de productos -->
+    <div class="products-section">
+      <h2 class="section-title">Productos Disponibles</h2>
+
+      <!-- Cargando -->
+      <div class="loading-state" *ngIf="isLoading">
+        <ion-spinner></ion-spinner>
+        <p>Cargando productos...</p>
+      </div>
+
+      <!-- Grid de productos -->
+      <ion-grid class="products-grid" *ngIf="!isLoading">
+        <ion-row>
+          <ion-col size="12" size-md="6" size-lg="4" *ngFor="let product of filteredProducts">
+            <ion-card class="product-card" button (click)="addToCart(product)">
+              <ion-card-content>
+                <div class="product-info">
+                  <h3>{{ product.name }}</h3>
+                  <p class="product-sku" *ngIf="product.sku">SKU: {{ product.sku }}</p>
+                  <div class="product-footer">
+                    <span class="product-price">{{ formatCurrency(product.price) }}</span>
+                    <ion-badge [color]="product.stock > 10 ? 'success' : 'warning'">
+                      Stock: {{ product.stock }}
+                    </ion-badge>
+                  </div>
+                </div>
+                <ion-button expand="block" size="small" class="add-button">
+                  <ion-icon name="add-outline" slot="start"></ion-icon>
+                  Agregar
+                </ion-button>
+              </ion-card-content>
+            </ion-card>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+
+      <!-- Estado vacío -->
+      <div class="empty-state" *ngIf="!isLoading && filteredProducts.length === 0">
+        <ion-icon name="search-outline"></ion-icon>
+        <h2>No se encontraron productos</h2>
+        <p>Intenta con otra búsqueda</p>
+      </div>
+    </div>
+
+    <!-- Carrito lateral -->
+    <div class="cart-sidebar" *ngIf="cart && cart.items.length > 0">
+      <ion-card class="cart-card">
+        <ion-card-header>
+          <div class="cart-header">
+            <ion-card-title>Carrito</ion-card-title>
+            <ion-button fill="clear" size="small" color="danger" (click)="clearCart()">
+              <ion-icon name="trash-outline"></ion-icon>
+            </ion-button>
+          </div>
+        </ion-card-header>
+
+        <ion-card-content>
+          <ion-list class="cart-items">
+            <ion-item *ngFor="let item of cart.items" class="cart-item">
+              <ion-label>
+                <h3>{{ item.productName }}</h3>
+                <p>{{ formatCurrency(item.unitPrice) }} x {{ item.quantity }}</p>
+                <p class="item-subtotal">{{ formatCurrency(item.subtotal) }}</p>
+              </ion-label>
+              <div class="quantity-controls" slot="end">
+                <ion-button fill="clear" size="small" (click)="updateQuantity(item, -1)">
+                  <ion-icon name="remove-outline"></ion-icon>
+                </ion-button>
+                <span class="quantity">{{ item.quantity }}</span>
+                <ion-button fill="clear" size="small" (click)="updateQuantity(item, 1)">
+                  <ion-icon name="add-outline"></ion-icon>
+                </ion-button>
+                <ion-button fill="clear" size="small" color="danger" (click)="removeItem(item)">
+                  <ion-icon name="close-circle-outline"></ion-icon>
+                </ion-button>
+              </div>
+            </ion-item>
+          </ion-list>
+
+          <div class="cart-totals">
+            <div class="total-row">
+              <span>Subtotal:</span>
+              <span class="amount">{{ formatCurrency(cart.subtotal) }}</span>
+            </div>
+            <div class="total-row" *ngIf="cart.tax > 0">
+              <span>Impuestos:</span>
+              <span class="amount">{{ formatCurrency(cart.tax) }}</span>
+            </div>
+            <div class="total-row" *ngIf="cart.discount > 0">
+              <span>Descuento:</span>
+              <span class="amount discount">-{{ formatCurrency(cart.discount) }}</span>
+            </div>
+            <div class="total-row total">
+              <span>Total:</span>
+              <span class="amount">{{ formatCurrency(cart.total) }}</span>
+            </div>
+          </div>
+
+          <ion-button expand="block" color="success" (click)="openCheckout()" class="checkout-button">
+            <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+            Finalizar Venta
+          </ion-button>
+        </ion-card-content>
+      </ion-card>
+    </div>
+  </div>
+
+  <!-- Modal de checkout -->
+  <ion-modal [isOpen]="showCheckoutModal" (didDismiss)="closeCheckout()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Finalizar Venta</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeCheckout()">Cancelar</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="checkout-content">
+        <ion-card class="checkout-summary">
+          <ion-card-header>
+            <ion-card-title>Resumen de Compra</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <div class="summary-row">
+              <span>Items:</span>
+              <span><strong>{{ cart?.itemsCount }}</strong></span>
+            </div>
+            <div class="summary-row total">
+              <span>Total a Pagar:</span>
+              <span class="total-amount">{{ formatCurrency(cart?.total || 0) }}</span>
+            </div>
+          </ion-card-content>
+        </ion-card>
+
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>Información del Cliente (Opcional)</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-item>
+              <ion-label position="stacked">Nombre</ion-label>
+              <ion-input [(ngModel)]="customer.name" placeholder="Nombre del cliente"></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label position="stacked">Email</ion-label>
+              <ion-input [(ngModel)]="customer.email" type="email" placeholder="email@ejemplo.com"></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label position="stacked">Teléfono</ion-label>
+              <ion-input [(ngModel)]="customer.phone" type="tel" placeholder="123-456-7890"></ion-input>
+            </ion-item>
+          </ion-card-content>
+        </ion-card>
+
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>Método de Pago</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-item>
+              <ion-label position="stacked">Método</ion-label>
+              <ion-select [(ngModel)]="paymentMethod" interface="popover">
+                <ion-select-option value="cash">Efectivo</ion-select-option>
+                <ion-select-option value="card">Tarjeta</ion-select-option>
+                <ion-select-option value="transfer">Transferencia</ion-select-option>
+              </ion-select>
+            </ion-item>
+          </ion-card-content>
+        </ion-card>
+
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>Notas (Opcional)</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-item>
+              <ion-textarea
+                [(ngModel)]="notes"
+                placeholder="Notas adicionales..."
+                rows="3">
+              </ion-textarea>
+            </ion-item>
+          </ion-card-content>
+        </ion-card>
+
+        <div class="checkout-actions">
+          <ion-button expand="block" color="success" size="large" (click)="completeSale()">
+            <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+            Procesar Venta - {{ formatCurrency(cart?.total || 0) }}
+          </ion-button>
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+</ion-content>
+
+
+

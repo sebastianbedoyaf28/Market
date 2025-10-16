@@ -1,0 +1,149 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/sales"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Detalle de Venta</ion-title>
+    <ion-buttons slot="end">
+      <ion-button color="danger" (click)="deleteSale()" *ngIf="sale">
+        <ion-icon name="trash-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <!-- Cargando -->
+  <div class="loading-state" *ngIf="isLoading">
+    <ion-spinner></ion-spinner>
+    <p>Cargando detalle...</p>
+  </div>
+
+  <!-- Detalle de la venta -->
+  <div *ngIf="!isLoading && sale">
+    <!-- Estado y fecha -->
+    <ion-card>
+      <ion-card-header>
+        <div class="card-header-content">
+          <ion-card-title>{{ sale.productName || 'Producto desconocido' }}</ion-card-title>
+          <ion-badge [color]="getStatusColor(sale.status)">
+            {{ getStatusLabel(sale.status) }}
+          </ion-badge>
+        </div>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-list class="info-list">
+          <ion-item>
+            <ion-icon name="calendar-outline" slot="start" color="primary"></ion-icon>
+            <ion-label>
+              <h3>Fecha de Venta</h3>
+              <p>{{ formatDate(sale.saleDate) }}</p>
+            </ion-label>
+          </ion-item>
+          
+          <ion-item *ngIf="sale.productSku">
+            <ion-icon name="cube-outline" slot="start" color="primary"></ion-icon>
+            <ion-label>
+              <h3>SKU</h3>
+              <p>{{ sale.productSku }}</p>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Cantidades y precios -->
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Detalles de la Venta</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-grid class="details-grid">
+          <ion-row>
+            <ion-col size="6">
+              <div class="detail-item">
+                <div class="detail-label">Cantidad</div>
+                <div class="detail-value quantity">{{ sale.quantity }}</div>
+              </div>
+            </ion-col>
+            <ion-col size="6">
+              <div class="detail-item">
+                <div class="detail-label">Precio Unitario</div>
+                <div class="detail-value">{{ formatCurrency(sale.unitPrice) }}</div>
+              </div>
+            </ion-col>
+          </ion-row>
+          <ion-row>
+            <ion-col size="12">
+              <div class="detail-item total">
+                <div class="detail-label">Total</div>
+                <div class="detail-value">{{ formatCurrency(sale.totalPrice) }}</div>
+              </div>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Información del cliente -->
+    <ion-card *ngIf="sale.customerName || sale.invoiceNumber">
+      <ion-card-header>
+        <ion-card-title>Información del Cliente</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-list class="info-list">
+          <ion-item *ngIf="sale.customerName">
+            <ion-icon name="person-outline" slot="start" color="primary"></ion-icon>
+            <ion-label>
+              <h3>Cliente</h3>
+              <p>{{ sale.customerName }}</p>
+            </ion-label>
+          </ion-item>
+          
+          <ion-item *ngIf="sale.invoiceNumber">
+            <ion-icon name="document-text-outline" slot="start" color="primary"></ion-icon>
+            <ion-label>
+              <h3>Número de Factura</h3>
+              <p>{{ sale.invoiceNumber }}</p>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Información del sistema -->
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Información del Sistema</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-list class="info-list">
+          <ion-item>
+            <ion-icon name="cloud-upload-outline" slot="start" color="primary"></ion-icon>
+            <ion-label>
+              <h3>Origen de Importación</h3>
+              <p>{{ getImportSourceLabel(sale.importSource) }}</p>
+            </ion-label>
+          </ion-item>
+          
+          <ion-item *ngIf="sale.createdAt">
+            <ion-icon name="time-outline" slot="start" color="primary"></ion-icon>
+            <ion-label>
+              <h3>Fecha de Registro</h3>
+              <p>{{ formatDateTime(sale.createdAt) }}</p>
+            </ion-label>
+          </ion-item>
+          
+          <ion-item *ngIf="sale.updatedAt && sale.updatedAt !== sale.createdAt">
+            <ion-icon name="time-outline" slot="start" color="primary"></ion-icon>
+            <ion-label>
+              <h3>Última Actualización</h3>
+              <p>{{ formatDateTime(sale.updatedAt) }}</p>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+      </ion-card-content>
+    </ion-card>
+  </div>
+</ion-content>
+
