@@ -2,8 +2,8 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject, Observable, Subject, of } from 'rxjs';
 import { catchError, distinctUntilChanged, map, switchMap, takeUntil } from 'rxjs/operators';
 import { AuthService } from './auth.service';
-import { UsersService } from '../modules/users/services/users.service';
-import { AppUser } from '../modules/users/models/user.model';
+import { UsersService } from '../../modules/users/services/users.service';
+import { AppUser } from '../../modules/users/models/user.model';
 
 @Injectable({ providedIn: 'root' })
 export class UserContextService implements OnDestroy {

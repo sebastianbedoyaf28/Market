@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import type { Session, User } from '@supabase/supabase-js';
-import { supabase } from '../core/supabase-client';
+import { supabase } from '../supabase-client';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {

@@ -5,7 +5,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { saveAs } from 'file-saver';
 import { supabase } from '../core/supabase-client';
-import { AuthService } from './auth.service';
+import { AuthService } from '../core/services/auth.service';
 import { InventoryService } from './inventory.service';
 
 export interface ExportOptions {

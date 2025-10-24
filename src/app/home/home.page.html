@@ -3,7 +3,16 @@
     <ion-buttons slot="start">
       <ion-menu-button></ion-menu-button>
     </ion-buttons>
-    <ion-title>SuperMarket Pro</ion-title>
+    <ion-title>
+      <div class="app-logo-container">
+        <div class="logo-placeholder">
+          <div class="logo-icon">
+            <ion-icon name="storefront"></ion-icon>
+          </div>
+          <span class="app-name">SuperMarket Pro</span>
+        </div>
+      </div>
+    </ion-title>
     <ion-buttons slot="end">
       <ion-button (click)="logout()" [disabled]="loading">
         <ion-icon name="log-out-outline"></ion-icon>

@@ -1,0 +1,18 @@
+INSTRUCCIONES PARA AGREGAR EL LOGO:
+
+1. Guarda la imagen del logo como "logo-supermarket-pro.png" en esta carpeta:
+   src/assets/images/
+
+2. La imagen debe ser:
+   - Formato PNG con transparencia
+   - Dimensiones recomendadas: 200x80 pixels (o proporcional)
+   - Texto: "SUPER MARKET PRO"
+   - Ícono de carrito de compras verde
+   - Fondo transparente
+
+3. Una vez guardada la imagen, elimina este archivo placeholder
+
+4. El logo ya está configurado en:
+   - Página de inicio (home.page.html)
+   - Página de login (login.page.html)
+   - Título de la aplicación (index.html)

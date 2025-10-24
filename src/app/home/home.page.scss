@@ -10,6 +10,69 @@ $danger-color: #dc3545;
 $warning-color: #ffc107;
 $info-color: #17a2b8;
 
+// Estilos para el logo en el header
+.app-logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+
+  .logo-placeholder {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    background: linear-gradient(135deg, #{$primary-color}, #{$info-color});
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+    transition: all 0.3s ease;
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+    }
+    
+    .logo-icon {
+      color: white;
+      font-size: 1.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 36px;
+      height: 36px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      backdrop-filter: blur(10px);
+    }
+
+    .app-name {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: white;
+      white-space: nowrap;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+      letter-spacing: 0.5px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .logo-placeholder .app-name {
+      display: none; // Ocultar texto en pantallas pequeñas, solo mostrar ícono
+    }
+    
+    .logo-placeholder {
+      padding: 0.6rem;
+      
+      .logo-icon {
+        min-width: 32px;
+        height: 32px;
+        font-size: 1.5rem;
+      }
+    }
+  }
+}
+
 // Contenido principal
 .dashboard-content {
   --background: #{$dark-bg};

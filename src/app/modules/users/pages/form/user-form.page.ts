@@ -9,7 +9,7 @@ import { UsersService } from '../../services/users.service';
 import { RolesService } from '../../../roles/services/roles.service';
 import { Role } from '../../../roles/models/role.model';
 import { AppUser } from '../../models/user.model';
-import { UserContextService } from '../../../../services/user-context.service';
+import { UserContextService } from '../../../../core/services/user-context.service';
 @Component({
   selector: 'app-user-form',
   standalone: true,

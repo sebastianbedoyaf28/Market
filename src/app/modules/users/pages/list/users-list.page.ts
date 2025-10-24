@@ -6,7 +6,7 @@ import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { UsersService } from '../../services/users.service';
 import { AppUser } from '../../models/user.model';
-import { UserContextService } from '../../../../services/user-context.service';
+import { UserContextService } from '../../../../core/services/user-context.service';
 
 @Component({
   selector: 'app-users-list',

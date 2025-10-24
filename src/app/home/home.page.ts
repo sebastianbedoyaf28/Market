@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { Observable, firstValueFrom, of } from 'rxjs';
 import { Product, ProductService } from '../services/product.service';
 import { CartService } from '../services/cart.service';
-import { AuthService } from '../services/auth.service';
+import { AuthService } from '../core/services/auth.service';
 import { InventoryService } from '../modules/inventory/services/inventory.service';
 import { supabase } from '../core/supabase-client';
 import { RealtimeChannel } from '@supabase/supabase-js';

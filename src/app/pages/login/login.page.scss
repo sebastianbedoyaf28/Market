@@ -22,7 +22,49 @@ $border-color: #404040;
   padding: 2rem 2rem 1rem;
   text-align: center;
   
-  .title {
+  .logo-section {
+    margin-bottom: 1.5rem;
+    
+    .login-logo-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      
+      .logo-icon-large {
+        color: white;
+        font-size: 3.5rem;
+        background: linear-gradient(135deg, #{$primary-color}, #764ba2);
+        padding: 1.25rem;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 90px;
+        height: 90px;
+        box-shadow: 0 10px 30px rgba(0, 123, 255, 0.4);
+        backdrop-filter: blur(15px);
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+        
+        &:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 15px 40px rgba(0, 123, 255, 0.5);
+        }
+      }
+      
+      .app-title {
+        color: #{$text-light};
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin: 0;
+        letter-spacing: -0.02em;
+        text-align: center;
+      }
+    }
+  }
+  
+  .login-title {
     color: #{$text-light};
     font-size: 2rem;
     font-weight: 600;
