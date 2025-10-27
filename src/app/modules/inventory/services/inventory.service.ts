@@ -832,6 +832,65 @@ export class InventoryService {
   private escapePdfText(text: string): string {
     return text.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
   }
+
+  // Métodos adicionales para compatibilidad con servicios existentes
+  
+  /**
+   * Calcula el stock actual de un producto
+   */
+  async calculateCurrentStock(productId: string): Promise<number> {
+    const product = await this.loadProductById(productId);
+    if (!product) {
+      return 0;
+    }
+    return product.totalStock;
+  }
+
+  /**
+   * Registra una salida de inventario (para ventas)
+   */
+  async registerExit(
+    productId: string, 
+    quantity: number, 
+    reason: 'venta' | 'merma' = 'venta',
+    notes?: string
+  ): Promise<void> {
+    const movement: RecordMovementDto = {
+      productId,
+      type: 'OUT',
+      quantity,
+      reason: reason === 'venta' ? 'sale' : 'waste',
+      note: notes
+    };
+
+    await this.recordMovementAsync(movement);
+  }
+
+  /**
+   * Registra una entrada de inventario
+   */
+  async registerEntry(
+    productId: string, 
+    quantity: number, 
+    lotNumber?: string, 
+    expiryDate?: string,
+    notes?: string
+  ): Promise<void> {
+    const movement: RecordMovementDto = {
+      productId,
+      type: 'IN',
+      quantity,
+      reason: 'purchase',
+      note: notes,
+      newLot: lotNumber ? {
+        lotNumber,
+        expiryDate,
+        provider: undefined
+      } : undefined
+    };
+
+    await this.recordMovementAsync(movement);
+  }
 }
 
 

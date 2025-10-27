@@ -17,7 +17,6 @@ import {
   IonLabel,
   IonButton,
   IonIcon,
-  IonChip,
   IonBadge,
   IonGrid,
   IonRow,
@@ -66,7 +65,6 @@ import { SalesService } from '../../services/sales.service';
     IonLabel,
     IonButton,
     IonIcon,
-    IonChip,
     IonBadge,
     IonGrid,
     IonRow,
@@ -114,7 +112,7 @@ export class SalesDetailPage implements OnInit {
         this.isLoading = false;
       },
       error: (error) => {
-        console.error('Error loading sale:', error);
+        // Error loading sale
         this.showToast('Error al cargar la venta', 'danger');
         this.isLoading = false;
         this.router.navigate(['/sales']);
@@ -150,7 +148,7 @@ export class SalesDetailPage implements OnInit {
               },
               error: async (error) => {
                 await loading.dismiss();
-                console.error('Error deleting sale:', error);
+                // Error deleting sale
                 await this.showToast('Error al eliminar la venta', 'danger');
               },
             });

@@ -3,7 +3,7 @@ import { from, Observable, of } from 'rxjs';
 import { map, mergeMap, catchError } from 'rxjs/operators';
 import * as XLSX from 'xlsx';
 import * as Papa from 'papaparse';
-import { InventoryService } from './inventory.service';
+import { InventoryService } from '../modules/inventory/services/inventory.service';
 import { supabase } from '../core/supabase-client';
 
 export interface SaleRecord {
@@ -362,7 +362,7 @@ export class SalesImportService {
         });
     } catch (error) {
       // Si la tabla de ventas no existe, solo registramos el movimiento de inventario
-      console.warn('Tabla de ventas no encontrada, solo se registró el movimiento de inventario');
+      // Tabla de ventas no encontrada, solo se registró el movimiento de inventario
     }
   }
 

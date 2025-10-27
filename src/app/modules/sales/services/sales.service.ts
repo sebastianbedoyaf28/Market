@@ -33,6 +33,7 @@ export class SalesService {
         customer_name,
         invoice_number,
         import_source,
+        status,
         user_id,
         created_at,
         updated_at,
@@ -64,7 +65,7 @@ export class SalesService {
     const { data, error } = await query;
 
     if (error) {
-      console.error('Error fetching sales:', error);
+      // Error fetching sales
       throw error;
     }
 
@@ -91,6 +92,7 @@ export class SalesService {
         customer_name,
         invoice_number,
         import_source,
+        status,
         user_id,
         created_at,
         updated_at,
@@ -100,7 +102,7 @@ export class SalesService {
       .maybeSingle();
 
     if (error) {
-      console.error('Error fetching sale:', error);
+      // Error fetching sale
       throw error;
     }
 
@@ -145,6 +147,7 @@ export class SalesService {
         customer_name: sale.customerName || null,
         invoice_number: sale.invoiceNumber || null,
         import_source: sale.importSource || 'manual',
+        status: sale.status || 'pending',
         user_id: user?.id || null,
       })
       .select(`
@@ -157,6 +160,7 @@ export class SalesService {
         customer_name,
         invoice_number,
         import_source,
+        status,
         user_id,
         created_at,
         updated_at,
@@ -165,7 +169,7 @@ export class SalesService {
       .single();
 
     if (error) {
-      console.error('Error creating sale:', error);
+      // Error creating sale
       throw error;
     }
 
@@ -202,6 +206,7 @@ export class SalesService {
     if (patch.customerName !== undefined) updateData.customer_name = patch.customerName;
     if (patch.invoiceNumber !== undefined) updateData.invoice_number = patch.invoiceNumber;
     if (patch.importSource !== undefined) updateData.import_source = patch.importSource;
+    if (patch.status !== undefined) updateData.status = patch.status;
 
     const { data, error } = await supabase()
       .from('sales')
@@ -217,6 +222,7 @@ export class SalesService {
         customer_name,
         invoice_number,
         import_source,
+        status,
         user_id,
         created_at,
         updated_at,
@@ -225,7 +231,7 @@ export class SalesService {
       .single();
 
     if (error) {
-      console.error('Error updating sale:', error);
+      // Error updating sale
       throw error;
     }
 
@@ -246,7 +252,7 @@ export class SalesService {
       .eq('id', id);
 
     if (error) {
-      console.error('Error deleting sale:', error);
+      // Error deleting sale
       throw error;
     }
   }
@@ -368,7 +374,7 @@ export class SalesService {
       customerName: row.customer_name,
       invoiceNumber: row.invoice_number,
       importSource: row.import_source,
-      status: 'pending', // Por defecto, se puede agregar a la BD después
+      status: row.status || 'pending',
       userId: row.user_id,
       createdAt: row.created_at,
       updatedAt: row.updated_at,

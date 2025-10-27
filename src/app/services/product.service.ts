@@ -157,13 +157,13 @@ export class ProductService {
       const { data, error } = await query;
 
       if (error) {
-        console.error('Error en búsqueda:', error);
+        // Error en búsqueda
         throw error;
       }
       
       return data as Product[];
     } catch (error) {
-      console.error('Error en searchProducts:', error);
+      // Error en searchProducts
       // Si hay error, devolver productos sin filtros
       return await this.getProducts();
     }
@@ -207,7 +207,7 @@ export class ProductService {
         .not('category', 'is', null);
 
       if (error) {
-        console.warn('Error obteniendo categorías:', error);
+        // Error obteniendo categorías
         // Devolver categorías por defecto si hay error
         return [
           'Alimentos',
@@ -225,7 +225,7 @@ export class ProductService {
       const categories = [...new Set(data?.map(item => item.category).filter(Boolean))];
       return categories.sort();
     } catch (error) {
-      console.warn('Error en getCategories:', error);
+      // Error en getCategories
       return [
         'Alimentos',
         'Bebidas',
@@ -248,7 +248,7 @@ export class ProductService {
         .select('price');
 
       if (error) {
-        console.warn('Error obteniendo rango de precios:', error);
+        // Error obteniendo rango de precios
         return { min: 0, max: 1000 };
       }
 
@@ -263,7 +263,7 @@ export class ProductService {
         max: Math.max(...prices)
       };
     } catch (error) {
-      console.warn('Error en getPriceRange:', error);
+      // Error en getPriceRange
       return { min: 0, max: 1000 };
     }
   }

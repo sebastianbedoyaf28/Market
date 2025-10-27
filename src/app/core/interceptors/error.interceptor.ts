@@ -78,7 +78,7 @@ export class ErrorInterceptor implements HttpInterceptor {
     }
 
     // Log error for debugging
-    console.error('HTTP Error:', {
+    // HTTP Error
       status: error.status,
       message: errorMessage,
       url: error.url,

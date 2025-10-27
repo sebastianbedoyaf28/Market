@@ -134,7 +134,7 @@ export class StorageUtils {
     try {
       localStorage.setItem(key, JSON.stringify(value));
     } catch (error) {
-      console.warn('Error saving to localStorage:', error);
+      // Error saving to localStorage
     }
   }
 
@@ -143,7 +143,7 @@ export class StorageUtils {
       const item = localStorage.getItem(key);
       return item ? JSON.parse(item) : defaultValue || null;
     } catch (error) {
-      console.warn('Error reading from localStorage:', error);
+      // Error reading from localStorage
       return defaultValue || null;
     }
   }
@@ -152,7 +152,7 @@ export class StorageUtils {
     try {
       localStorage.removeItem(key);
     } catch (error) {
-      console.warn('Error removing from localStorage:', error);
+      // Error removing from localStorage
     }
   }
 }

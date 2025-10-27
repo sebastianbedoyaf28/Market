@@ -145,7 +145,7 @@ export class POSMainPage implements OnInit, OnDestroy {
       this.products = await this.posService.searchProducts();
       this.filteredProducts = [...this.products];
     } catch (error) {
-      console.error('Error loading products:', error);
+      // Error loading products
       await this.showToast('Error al cargar productos', 'danger');
     } finally {
       this.isLoading = false;
@@ -165,7 +165,7 @@ export class POSMainPage implements OnInit, OnDestroy {
       const results = await this.posService.searchProducts(query);
       this.filteredProducts = results;
     } catch (error) {
-      console.error('Error searching products:', error);
+      // Error searching products
     }
   }
 
@@ -262,7 +262,7 @@ export class POSMainPage implements OnInit, OnDestroy {
       await this.loadProducts();
     } catch (error: any) {
       await loading.dismiss();
-      console.error('Error completing sale:', error);
+      // Error completing sale
       await this.showToast(error.message || 'Error al procesar la venta', 'danger');
     }
   }

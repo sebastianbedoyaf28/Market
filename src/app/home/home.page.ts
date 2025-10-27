@@ -205,7 +205,6 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   private setupRealtimeSubscriptions(): void {
-    console.log('[Realtime] Configurando subscripciones...');
     const sb = supabase();
 
     // Subscripción a cambios en productos
@@ -215,13 +214,10 @@ export class HomePage implements OnInit, OnDestroy {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'products' },
         (payload) => {
-          console.log('[Realtime] Cambio en products:', payload);
           this.updateRecentActivities();
         }
       )
-      .subscribe((status) => {
-        console.log('[Realtime] Canal products:', status);
-      });
+      .subscribe();
 
     // Subscripción a cambios en carritos (pedidos)
     const cartsChannel = sb
@@ -230,14 +226,11 @@ export class HomePage implements OnInit, OnDestroy {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'carts' },
         (payload) => {
-          console.log('[Realtime] Cambio en carts:', payload);
           this.updateRecentActivities();
           this.updateMetrics();
         }
       )
-      .subscribe((status) => {
-        console.log('[Realtime] Canal carts:', status);
-      });
+      .subscribe();
 
     // Subscripción a cambios en items de carritos
     const cartItemsChannel = sb
@@ -246,14 +239,11 @@ export class HomePage implements OnInit, OnDestroy {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'cart_items' },
         (payload) => {
-          console.log('[Realtime] Cambio en cart_items:', payload);
           this.updateRecentActivities();
           this.updateMetrics();
         }
       )
-      .subscribe((status) => {
-        console.log('[Realtime] Canal cart_items:', status);
-      });
+      .subscribe();
 
     // Subscripción a cambios en productos de inventario
     const inventoryChannel = sb
@@ -262,14 +252,11 @@ export class HomePage implements OnInit, OnDestroy {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'inventory_products' },
         (payload) => {
-          console.log('[Realtime] Cambio en inventory_products:', payload);
           this.updateRecentActivities();
           this.updateMetrics();
         }
       )
-      .subscribe((status) => {
-        console.log('[Realtime] Canal inventory_products:', status);
-      });
+      .subscribe();
 
     // Subscripción a cambios en órdenes de compra (GESTIÓN DE PEDIDOS)
     const purchaseOrdersChannel = sb
@@ -278,19 +265,11 @@ export class HomePage implements OnInit, OnDestroy {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'purchase_orders' },
         (payload) => {
-          console.log('[Realtime] ✨ Cambio en purchase_orders (GESTIÓN DE PEDIDOS):', payload);
           this.updateRecentActivities();
           this.updateMetrics();
         }
       )
-      .subscribe((status) => {
-        console.log('[Realtime] Canal purchase_orders:', status);
-        if (status === 'SUBSCRIBED') {
-          console.log('[Realtime] ✅ Canal de gestión de pedidos ACTIVO');
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('[Realtime] ❌ ERROR: Canal de gestión de pedidos falló. Verifica que Realtime esté habilitado en Supabase.');
-        }
-      });
+      .subscribe();
 
     // Subscripción a cambios en items de órdenes de compra
     const purchaseOrderItemsChannel = sb
@@ -299,14 +278,11 @@ export class HomePage implements OnInit, OnDestroy {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'purchase_order_items' },
         (payload) => {
-          console.log('[Realtime] ✨ Cambio en purchase_order_items:', payload);
           this.updateRecentActivities();
           this.updateMetrics();
         }
       )
-      .subscribe((status) => {
-        console.log('[Realtime] Canal purchase_order_items:', status);
-      });
+      .subscribe();
 
     // Subscripción a cambios en ventas
     const salesChannel = sb
@@ -315,14 +291,11 @@ export class HomePage implements OnInit, OnDestroy {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'sales' },
         (payload) => {
-          console.log('[Realtime] Cambio en sales:', payload);
           this.updateRecentActivities();
           this.updateMetrics();
         }
       )
-      .subscribe((status) => {
-        console.log('[Realtime] Canal sales:', status);
-      });
+      .subscribe();
 
     this.realtimeChannels = [
       productsChannel,
@@ -334,8 +307,6 @@ export class HomePage implements OnInit, OnDestroy {
       salesChannel
     ];
 
-    console.log('[Realtime] ✅ Configuración completa - 7 canales iniciados');
-    console.log('[Realtime] 📝 Para que funcione, ejecuta el script SQL en Supabase (ver DIAGNOSTICO_REALTIME.md)');
   }
 
   private async updateRecentActivities(): Promise<void> {
@@ -360,7 +331,7 @@ export class HomePage implements OnInit, OnDestroy {
           });
         });
       } catch (error) {
-        console.error('Error cargando productos recientes:', error);
+        // Error cargando productos recientes
       }
 
       // 2. Actividades de inventario
@@ -381,7 +352,7 @@ export class HomePage implements OnInit, OnDestroy {
           });
         });
       } catch (error) {
-        console.error('Error cargando inventario reciente:', error);
+        // Error cargando inventario reciente
       }
 
       // 3. Actividades de carritos (pedidos)
@@ -403,7 +374,7 @@ export class HomePage implements OnInit, OnDestroy {
           });
         });
       } catch (error) {
-        console.error('Error cargando carritos recientes:', error);
+        // Error cargando carritos recientes
       }
 
       // 4. Actividades de items de carritos
@@ -431,7 +402,7 @@ export class HomePage implements OnInit, OnDestroy {
           });
         });
       } catch (error) {
-        console.error('Error cargando items de carrito:', error);
+        // Error cargando items de carrito
       }
 
       // 5. Actividades de órdenes de compra
@@ -483,7 +454,7 @@ export class HomePage implements OnInit, OnDestroy {
           });
         });
       } catch (error) {
-        console.error('Error cargando órdenes de compra:', error);
+        // Error cargando órdenes de compra
       }
 
       // 6. Actividades de items de órdenes de compra
@@ -491,11 +462,11 @@ export class HomePage implements OnInit, OnDestroy {
         const { data: orderItems } = await supabase()
           .from('purchase_order_items')
           .select(`
-            id, 
-            quantity_ordered, 
+            id,
+            quantity_ordered,
             quantity_received,
             created_at,
-            inventory_products (name)
+            inventory_products!inner (name)
           `)
           .order('created_at', { ascending: false })
           .limit(5);
@@ -515,7 +486,7 @@ export class HomePage implements OnInit, OnDestroy {
           });
         });
       } catch (error) {
-        console.error('Error cargando items de órdenes:', error);
+        // Error cargando items de órdenes
       }
 
       // 7. Actividades de ventas
@@ -527,7 +498,7 @@ export class HomePage implements OnInit, OnDestroy {
             quantity, 
             total_price,
             sale_date,
-            products (name)
+            products!inner (name)
           `)
           .order('sale_date', { ascending: false })
           .limit(5);
@@ -543,7 +514,7 @@ export class HomePage implements OnInit, OnDestroy {
           });
         });
       } catch (error) {
-        console.error('Error cargando ventas recientes:', error);
+        // Error cargando ventas recientes
       }
 
       // Ordenar todas las actividades por tiempo (más recientes primero)
@@ -567,7 +538,7 @@ export class HomePage implements OnInit, OnDestroy {
       // Tomar solo las 10 más recientes
       this.recentActivities = allActivities.slice(0, 10);
     } catch (error) {
-      console.error('Error actualizando actividades recientes:', error);
+      // Error actualizando actividades recientes
     }
   }
 
@@ -600,7 +571,7 @@ export class HomePage implements OnInit, OnDestroy {
       // Actualizar ventas del día
       this.todaySales = await this.carts.sumTodaySales().catch(() => 0);
     } catch (error) {
-      console.error('Error actualizando métricas:', error);
+      // Error actualizando métricas
     }
   }
 
@@ -649,7 +620,7 @@ export class HomePage implements OnInit, OnDestroy {
       }
       this.recentActivities = [...orderActivities, ...recentInv].slice(0, 10);
     } catch (error) {
-      console.error('Error cargando datos del dashboard:', error);
+      // Error cargando datos del dashboard
     } finally {
       this.loading = false;
     }

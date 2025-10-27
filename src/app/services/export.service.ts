@@ -6,7 +6,7 @@ import autoTable from 'jspdf-autotable';
 import { saveAs } from 'file-saver';
 import { supabase } from '../core/supabase-client';
 import { AuthService } from '../core/services/auth.service';
-import { InventoryService } from './inventory.service';
+import { InventoryService } from '../modules/inventory/services/inventory.service';
 
 export interface ExportOptions {
   type: 'inventory' | 'sales' | 'orders';
@@ -126,7 +126,7 @@ export class ExportService {
         if (error.error_description) msg = error.error_description;
         if (error.message) msg = error.message;
       }
-      console.error('Error en exportación:', error);
+      // Error en exportación
       return { success: false, error: msg };
     }
   }
@@ -393,7 +393,7 @@ export class ExportService {
       .insert(exportData);
 
     if (error) {
-      console.warn('Error guardando historial de exportación:', error);
+      // Error guardando historial de exportación
       // No lanzar error, ya que la exportación fue exitosa
     }
   }
@@ -409,7 +409,7 @@ export class ExportService {
       .limit(limit);
 
     if (error) {
-      console.error('Error obteniendo historial:', error);
+      // Error obteniendo historial
       return [];
     }
 

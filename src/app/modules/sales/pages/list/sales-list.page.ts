@@ -23,14 +23,11 @@ import {
   IonBadge,
   IonRefresher,
   IonRefresherContent,
-  IonFab,
-  IonFabButton,
   IonGrid,
   IonRow,
   IonCol,
   IonSelect,
   IonSelectOption,
-  IonDatetime,
   IonModal,
   IonSpinner,
   IonInput,
@@ -83,14 +80,11 @@ import { SalesService } from '../../services/sales.service';
     IonBadge,
     IonRefresher,
     IonRefresherContent,
-    IonFab,
-    IonFabButton,
     IonGrid,
     IonRow,
     IonCol,
     IonSelect,
     IonSelectOption,
-    IonDatetime,
     IonModal,
     IonSpinner,
     IonInput,
@@ -148,14 +142,14 @@ export class SalesListPage implements OnInit {
           if (event) event.target.complete();
         },
         error: (error) => {
-          console.error('Error loading sales:', error);
+          // Error loading sales
           this.showToast('Error al cargar ventas', 'danger');
           this.isLoading = false;
           if (event) event.target.complete();
         },
       });
     } catch (error) {
-      console.error('Error:', error);
+      // Error
       this.isLoading = false;
       if (event) event.target.complete();
     }
@@ -167,7 +161,7 @@ export class SalesListPage implements OnInit {
         this.summary = summary;
       },
       error: (error) => {
-        console.error('Error loading summary:', error);
+        // Error loading summary
       },
     });
   }
@@ -245,7 +239,7 @@ export class SalesListPage implements OnInit {
               },
               error: async (error) => {
                 await loading.dismiss();
-                console.error('Error deleting sale:', error);
+                // Error deleting sale
                 await this.showToast('Error al eliminar la venta', 'danger');
               },
             });
@@ -270,7 +264,7 @@ export class SalesListPage implements OnInit {
       await this.showToast('Exportado correctamente', 'success');
     } catch (error) {
       await loading.dismiss();
-      console.error('Error exporting CSV:', error);
+      // Error exporting CSV
       await this.showToast('Error al exportar', 'danger');
     }
   }
@@ -288,7 +282,7 @@ export class SalesListPage implements OnInit {
       await this.showToast('Exportado correctamente', 'success');
     } catch (error) {
       await loading.dismiss();
-      console.error('Error exporting PDF:', error);
+      // Error exporting PDF
       await this.showToast('Error al exportar', 'danger');
     }
   }

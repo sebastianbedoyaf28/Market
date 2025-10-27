@@ -137,7 +137,7 @@ export class ReportsPage implements OnInit {
     try {
       this.exportHistory = await this.exportService.getExportHistory();
     } catch (error) {
-      console.error('Error cargando historial:', error);
+      // Error cargando historial
     } finally {
       this.isLoadingHistory = false;
     }

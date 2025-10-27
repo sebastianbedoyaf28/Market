@@ -11,30 +11,22 @@ export class AppComponent implements OnInit {
   constructor() {}
 
   async ngOnInit() {
-    const sb = supabase();
+    try {
+      const sb = supabase();
 
-    // Log inicial de sesión
-    const { data: { session } } = await sb.auth.getSession();
-    console.log('[Auth] sesión actual:', session);
+      // Configurar autenticación
+      const { data: { session } } = await sb.auth.getSession();
 
-    // Log en cada intento/cambio de auth
-    sb.auth.onAuthStateChange((event, session) => {
-      console.log('[Auth] evento:', event, 'sesión:', session);
-      // Opcional: muestra el correo logueado en el título/encabezado
-      const email = session?.user?.email ?? '(sin sesión)';
-      document.title = `Market - ${email}`;
+      sb.auth.onAuthStateChange((event, session) => {
+        const email = session?.user?.email ?? '(sin sesión)';
+        document.title = `Market - ${email}`;
 
-      // (Opcional) también podrías actualizar algún elemento del UI aquí.
-      const note = document.getElementById('user-email');
-      if (note) note.textContent = session?.user?.email ?? 'Invitado';
-    });
-
-    // Prueba rápida de conexión a DB
-    const { data, error } = await sb.from('products').select('*').limit(1);
-    if (error) {
-      console.error('[DB] error probando conexión:', error);
-    } else {
-      console.log('[DB] conexión OK. Ejemplo products[0]:', data?.[0]);
+        const note = document.getElementById('user-email');
+        if (note) note.textContent = session?.user?.email ?? 'Invitado';
+      });
+    } catch (error) {
+      console.error('Error inicializando aplicación:', error);
+      // La aplicación continuará funcionando aunque Supabase tenga problemas
     }
   }
 }

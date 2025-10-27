@@ -37,7 +37,7 @@ export class POSService {
     const { data, error } = await supaQuery.order('name').limit(50);
 
     if (error) {
-      console.error('Error searching products:', error);
+      // Error searching products
       throw error;
     }
 
@@ -69,7 +69,7 @@ export class POSService {
     const { data, error } = await query.order('name');
 
     if (error) {
-      console.error('Error getting products:', error);
+      // Error getting products
       throw error;
     }
 
@@ -267,7 +267,7 @@ export class POSService {
             .eq('id', item.productId);
         }
       } catch (error) {
-        console.error(`Error updating stock for product ${item.productId}:`, error);
+        // Error updating stock for product
         // Continuar con los demás productos aunque uno falle
       }
     }
@@ -320,7 +320,7 @@ export class POSService {
     try {
       localStorage.setItem('pos_cart', JSON.stringify(this.cartSubject.value));
     } catch (error) {
-      console.error('Error saving cart to storage:', error);
+      // Error saving cart to storage
     }
   }
 
@@ -335,7 +335,7 @@ export class POSService {
         this.cartSubject.next(cart);
       }
     } catch (error) {
-      console.error('Error loading cart from storage:', error);
+      // Error loading cart from storage
     }
   }
 }
