@@ -1,5 +1,15 @@
 {
 	"appId": "io.ionic.starter",
 	"appName": "myApp",
-	"webDir": "www"
+	"webDir": "www",
+	"plugins": {
+		"Filesystem": {
+			"android": {
+				"permissions": [
+					"READ_EXTERNAL_STORAGE",
+					"WRITE_EXTERNAL_STORAGE"
+				]
+			}
+		}
+	}
 }

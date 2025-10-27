@@ -45,6 +45,7 @@ import {
   calendarOutline,
   closeCircleOutline,
 } from 'ionicons/icons';
+import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Sale, SaleFilters, SalesSummary } from '../../models/sales.models';
 import { SalesService } from '../../services/sales.service';
 
@@ -259,9 +260,8 @@ export class SalesListPage implements OnInit {
 
     try {
       const blob = await this.salesService.exportToCSV(this.filters);
-      this.downloadFile(blob, `ventas_${this.getDateString()}.csv`);
+      await this.downloadFile(blob, `ventas_${this.getDateString()}.csv`);
       await loading.dismiss();
-      await this.showToast('Exportado correctamente', 'success');
     } catch (error) {
       await loading.dismiss();
       // Error exporting CSV
@@ -277,9 +277,8 @@ export class SalesListPage implements OnInit {
 
     try {
       const blob = await this.salesService.exportToPDF(this.filters);
-      this.downloadFile(blob, `ventas_${this.getDateString()}.pdf`);
+      await this.downloadFile(blob, `ventas_${this.getDateString()}.pdf`);
       await loading.dismiss();
-      await this.showToast('Exportado correctamente', 'success');
     } catch (error) {
       await loading.dismiss();
       // Error exporting PDF
@@ -287,15 +286,49 @@ export class SalesListPage implements OnInit {
     }
   }
 
-  private downloadFile(blob: Blob, filename: string) {
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+  private async downloadFile(blob: Blob, filename: string) {
+    try {
+      // Convertir Blob a base64
+      const base64 = await this.blobToBase64(blob);
+      
+      // Guardar en el directorio de documentos de la app
+      const result = await Filesystem.writeFile({
+        path: filename,
+        data: base64,
+        directory: Directory.Documents, // Guarda en el directorio de documentos de la app
+      });
+      
+      // Mostrar mensaje de éxito
+      await this.showToast('Archivo descargado correctamente', 'success');
+    } catch (error: any) {
+      // Si no es un dispositivo móvil, usar el método tradicional
+      try {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      } catch (fallbackError) {
+        await this.showToast('Error al descargar archivo', 'danger');
+      }
+    }
+  }
+
+  private blobToBase64(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        // Detectar el tipo MIME para el prefijo correcto
+        const mimeType = blob.type === 'application/pdf' ? 'application/pdf' : 'text/csv';
+        resolve(base64.split(',')[1]); // Remover el prefijo data:mimeType;base64,
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
   }
 
   private getDateString(): string {

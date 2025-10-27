@@ -120,12 +120,46 @@ export class InventoryService {
   }
 
   async exportInventoryToPdf(filters?: InventoryFilters): Promise<Blob> {
+    const { jsPDF } = await import('jspdf');
     const inventory = await this.loadInventory(filters);
-    const lines = inventory.map(product =>
-      `${product.sku} ${product.name} Stock:${product.totalStock} Estado:${this.translateStatus(product.status)}`,
-    );
-    const content = this.buildSimplePdf(`Inventario (${new Date().toLocaleString()})`, lines);
-    return new Blob([content], { type: 'application/pdf' });
+
+    const doc = new jsPDF();
+    
+    // Título
+    doc.setFontSize(20);
+    doc.text('REPORTE DE INVENTARIO', 14, 20);
+    
+    // Información del reporte
+    doc.setFontSize(10);
+    doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 14, 30);
+    doc.text(`Total de productos: ${inventory.length}`, 14, 36);
+    
+    // Encabezados de la tabla
+    let yPos = 50;
+    const pageHeight = doc.internal.pageSize.height;
+    
+    if (inventory.length > 0) {
+      doc.setFontSize(11);
+      doc.text('DETALLE DE PRODUCTOS', 14, yPos);
+      yPos += 10;
+      
+      inventory.forEach((product, index) => {
+        // Verificar si necesitamos una nueva página
+        if (yPos > pageHeight - 40) {
+          doc.addPage();
+          yPos = 20;
+        }
+        
+        doc.setFontSize(9);
+        doc.text(`${index + 1}. ${product.sku} - ${product.name}`, 14, yPos);
+        yPos += 6;
+        
+        doc.text(`Stock: ${product.totalStock} | Estado: ${this.translateStatus(product.status)}`, 16, yPos);
+        yPos += 8;
+      });
+    }
+    
+    return doc.output('blob');
   }
 
   private async loadInventory(filters?: InventoryFilters): Promise<InventoryProduct[]> {
@@ -780,58 +814,6 @@ export class InventoryService {
     }
   }
 
-  private buildSimplePdf(title: string, lines: string[]): Uint8Array {
-    const header = '%PDF-1.3\n';
-    const objects: string[] = [];
-
-    const textStream = [
-      'BT',
-      '/F1 12 Tf',
-      '72 750 Td',
-      `(${this.escapePdfText(title)}) Tj`,
-    ];
-
-    for (const line of lines) {
-      textStream.push('0 -14 Td', `(${this.escapePdfText(line)}) Tj`);
-    }
-
-    textStream.push('ET');
-
-    const content = textStream.join('\n');
-    const length = content.length;
-
-    const fontObject = '2 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n';
-    const contentObject = `3 0 obj\n<< /Length ${length} >>\nstream\n${content}\nendstream\nendobj\n`;
-    const pageObject = '4 0 obj\n<< /Type /Page /Parent 5 0 R /Resources << /Font << /F1 2 0 R >> >> /MediaBox [0 0 612 792] /Contents 3 0 R >>\nendobj\n';
-    const pagesObject = '5 0 obj\n<< /Type /Pages /Kids [4 0 R] /Count 1 >>\nendobj\n';
-    const catalogObject = '1 0 obj\n<< /Type /Catalog /Pages 5 0 R >>\nendobj\n';
-
-    objects.push(catalogObject, fontObject, contentObject, pageObject, pagesObject);
-
-    const xref: number[] = [];
-    let position = header.length;
-    const body = objects
-      .map(obj => {
-        const current = position;
-        position += obj.length;
-        xref.push(current);
-        return obj;
-      })
-      .join('');
-
-    const xrefStart = position;
-    const xrefTable =
-      `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n` +
-      xref.map(offset => `${offset.toString().padStart(10, '0')} 00000 n \n`).join('');
-    const trailer = `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`;
-
-    const pdfString = header + body + xrefTable + trailer;
-    return new TextEncoder().encode(pdfString);
-  }
-
-  private escapePdfText(text: string): string {
-    return text.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
-  }
 
   // Métodos adicionales para compatibilidad con servicios existentes
   

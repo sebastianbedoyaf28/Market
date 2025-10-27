@@ -333,29 +333,52 @@ export class SalesService {
    * RF007 - Exportación con filtros aplicados
    */
   async exportToPDF(filters?: SaleFilters): Promise<Blob> {
-    // Para una implementación completa de PDF, necesitarías una librería como jsPDF
-    // Por ahora retornamos un PDF básico con texto plano
+    const { jsPDF } = await import('jspdf');
     const sales = await this.listAsync(filters);
     const summary = await this.getSummaryAsync(filters);
 
-    let content = 'REPORTE DE VENTAS\n\n';
-    content += `Fecha de generación: ${new Date().toLocaleDateString()}\n\n`;
-    content += `Total de ventas: ${summary.totalSales}\n`;
-    content += `Monto total: $${summary.totalAmount.toFixed(2)}\n`;
-    content += `Cantidad total: ${summary.totalQuantity}\n\n`;
-    content += '---\n\n';
-
-    sales.forEach(sale => {
-      content += `Fecha: ${sale.saleDate}\n`;
-      content += `Producto: ${sale.productName || 'N/A'}\n`;
-      content += `Cantidad: ${sale.quantity}\n`;
-      content += `Total: $${sale.totalPrice.toFixed(2)}\n`;
-      if (sale.customerName) content += `Cliente: ${sale.customerName}\n`;
-      if (sale.invoiceNumber) content += `Factura: ${sale.invoiceNumber}\n`;
-      content += `---\n\n`;
-    });
-
-    return new Blob([content], { type: 'application/pdf' });
+    const doc = new jsPDF();
+    
+    // Título
+    doc.setFontSize(20);
+    doc.text('REPORTE DE VENTAS', 14, 20);
+    
+    // Información del reporte
+    doc.setFontSize(10);
+    doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 14, 30);
+    doc.text(`Total de ventas: ${summary.totalSales}`, 14, 36);
+    doc.text(`Monto total: $${summary.totalAmount.toFixed(2)}`, 14, 42);
+    doc.text(`Cantidad total: ${summary.totalQuantity}`, 14, 48);
+    
+    // Encabezados de la tabla
+    let yPos = 60;
+    const pageHeight = doc.internal.pageSize.height;
+    
+    if (sales.length > 0) {
+      doc.setFontSize(12);
+      doc.text('DETALLE DE VENTAS', 14, yPos);
+      yPos += 10;
+      
+      sales.forEach((sale, index) => {
+        // Verificar si necesitamos una nueva página
+        if (yPos > pageHeight - 40) {
+          doc.addPage();
+          yPos = 20;
+        }
+        
+        doc.setFontSize(9);
+        doc.text(`${index + 1}. ${sale.saleDate}`, 14, yPos);
+        yPos += 6;
+        
+        doc.text(`Producto: ${sale.productName || 'N/A'}`, 16, yPos);
+        yPos += 6;
+        
+        doc.text(`Cantidad: ${sale.quantity} | Total: $${sale.totalPrice.toFixed(2)}`, 16, yPos);
+        yPos += 8;
+      });
+    }
+    
+    return doc.output('blob');
   }
 
   /**
