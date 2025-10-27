@@ -87,12 +87,23 @@ $info-color: #17a2b8;
   border-radius: 0 0 2rem 2rem;
   margin-bottom: 1.5rem;
 
+  @media (max-width: 480px) {
+    padding: 1.5rem 1rem 1rem;
+    border-radius: 0 0 1.5rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+
   .dashboard-title {
     color: #{$text-light};
     font-size: 2.2rem;
     font-weight: 700;
     margin: 0 0 0.5rem;
     letter-spacing: -0.02em;
+
+    @media (max-width: 480px) {
+      font-size: 1.8rem;
+      margin: 0 0 0.25rem;
+    }
   }
 
   .dashboard-subtitle {
@@ -100,6 +111,11 @@ $info-color: #17a2b8;
     font-size: 1.1rem;
     margin: 0 0 1rem;
     font-weight: 400;
+
+    @media (max-width: 480px) {
+      font-size: 0.9rem;
+      margin: 0 0 0.75rem;
+    }
   }
 
   .user-info {
@@ -110,8 +126,17 @@ $info-color: #17a2b8;
     color: #{$text-muted};
     font-size: 0.9rem;
 
+    @media (max-width: 480px) {
+      font-size: 0.8rem;
+      gap: 0.25rem;
+    }
+
     ion-icon {
       font-size: 1.2rem;
+
+      @media (max-width: 480px) {
+        font-size: 1rem;
+      }
     }
   }
 }
@@ -120,12 +145,20 @@ $info-color: #17a2b8;
 .metrics-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-  padding: 0 1.5rem;
-  margin-bottom: 2rem;
+  gap: 0.75rem;
+  padding: 0 1rem;
+  margin-bottom: 1.5rem;
+
+  @media (max-width: 480px) {
+    gap: 0.5rem;
+    padding: 0 0.75rem;
+  }
 
   @media (min-width: 768px) {
     grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    padding: 0 1.5rem;
+    margin-bottom: 2rem;
   }
 }
 
@@ -145,6 +178,14 @@ $info-color: #17a2b8;
     box-shadow: 0 8px 25px rgba(0, 123, 255, 0.15);
   }
 
+  // Estilos para móvil
+  @media (max-width: 480px) {
+    padding: 1rem 0.75rem;
+    gap: 0.75rem;
+    flex-direction: column;
+    text-align: center;
+  }
+
   .metric-icon {
     width: 50px;
     height: 50px;
@@ -153,6 +194,13 @@ $info-color: #17a2b8;
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
+    flex-shrink: 0;
+
+    @media (max-width: 480px) {
+      width: 45px;
+      height: 45px;
+      font-size: 1.3rem;
+    }
 
     &.inventory {
       background: linear-gradient(135deg, #{$primary-color}, #{$info-color});
@@ -185,6 +233,11 @@ $info-color: #17a2b8;
       margin: 0 0 0.25rem;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+
+      @media (max-width: 480px) {
+        font-size: 0.7rem;
+        margin: 0 0 0.15rem;
+      }
     }
 
     .metric-value {
@@ -192,12 +245,21 @@ $info-color: #17a2b8;
       font-size: 1.5rem;
       font-weight: 700;
       margin: 0 0 0.25rem;
+
+      @media (max-width: 480px) {
+        font-size: 1.2rem;
+        margin: 0 0 0.15rem;
+      }
     }
 
     .metric-label {
       color: #{$text-muted};
       font-size: 0.7rem;
       margin: 0;
+
+      @media (max-width: 480px) {
+        font-size: 0.65rem;
+      }
     }
   }
 }
@@ -206,12 +268,21 @@ $info-color: #17a2b8;
 .modules-section {
   padding: 0 1.5rem 2rem;
 
+  @media (max-width: 480px) {
+    padding: 0 1rem 1.5rem;
+  }
+
   .section-title {
     color: #{$text-light};
     font-size: 1.5rem;
     font-weight: 600;
     margin: 0 0 1.5rem;
     text-align: center;
+
+    @media (max-width: 480px) {
+      font-size: 1.2rem;
+      margin: 0 0 1rem;
+    }
   }
 }
 
@@ -219,6 +290,10 @@ $info-color: #17a2b8;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
+
+  @media (max-width: 480px) {
+    gap: 0.75rem;
+  }
 
   @media (min-width: 768px) {
     grid-template-columns: repeat(3, 1fr);
@@ -318,12 +393,21 @@ $info-color: #17a2b8;
 .recent-activity {
   padding: 0 1.5rem 2rem;
 
+  @media (max-width: 480px) {
+    padding: 0 1rem 1.5rem;
+  }
+
   .section-title {
     color: #{$text-light};
     font-size: 1.5rem;
     font-weight: 600;
     margin: 0 0 1.5rem;
     text-align: center;
+
+    @media (max-width: 480px) {
+      font-size: 1.2rem;
+      margin: 0 0 1rem;
+    }
   }
 
   ion-list {
