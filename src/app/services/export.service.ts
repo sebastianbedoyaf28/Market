@@ -4,6 +4,8 @@ import { map, switchMap } from 'rxjs/operators';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { saveAs } from 'file-saver';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
 import { supabase } from '../core/supabase-client';
 import { AuthService } from '../core/services/auth.service';
 import { InventoryService } from '../modules/inventory/services/inventory.service';
@@ -298,9 +300,11 @@ export class ExportService {
       csvContent += values.join(',') + '\n';
     });
 
-    // Crear y descargar archivo
+    // Crear blob
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    saveAs(blob, `${fileName}.csv`);
+    
+    // Guardar archivo usando el método apropiado para la plataforma
+    await this.saveFile(blob, `${fileName}.csv`);
   }
 
   /**
@@ -380,8 +384,9 @@ export class ExportService {
       }
     });
 
-    // Guardar PDF
-    doc.save(`${fileName}.pdf`);
+    // Guardar PDF usando el método apropiado para la plataforma
+    const blob = doc.output('blob');
+    await this.saveFile(blob, `${fileName}.pdf`);
   }
 
   /**
@@ -461,5 +466,51 @@ export class ExportService {
   private getDateString(): string {
     const now = new Date();
     return now.toISOString().split('T')[0].replace(/-/g, '');
+  }
+
+  /**
+   * Guarda un archivo usando el método apropiado según la plataforma
+   * En Android/iOS usa Filesystem de Capacitor, en web usa saveAs
+   */
+  private async saveFile(blob: Blob, filename: string): Promise<void> {
+    const platform = Capacitor.getPlatform();
+    
+    // Si estamos en Android o iOS, usar Filesystem de Capacitor
+    if (platform === 'android' || platform === 'ios') {
+      try {
+        // Convertir Blob a base64
+        const base64 = await this.blobToBase64(blob);
+        
+        // Guardar en el directorio de documentos de la app
+        await Filesystem.writeFile({
+          path: filename,
+          data: base64,
+          directory: Directory.Documents,
+        });
+      } catch (error) {
+        // Si falla, intentar con el método web como fallback
+        console.error('Error al guardar con Filesystem, usando fallback:', error);
+        saveAs(blob, filename);
+      }
+    } else {
+      // En web, usar saveAs tradicional
+      saveAs(blob, filename);
+    }
+  }
+
+  /**
+   * Convierte un Blob a base64
+   */
+  private blobToBase64(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        // Remover el prefijo data:mimeType;base64,
+        resolve(base64.split(',')[1]);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
   }
 }

@@ -325,6 +325,9 @@ export class SalesService {
       ...rows.map(row => row.map(cell => `"${cell}"`).join(',')),
     ].join('\n');
 
+    // Crear blob con encoding UTF-8
+    // Nota: El BOM UTF-8 puede causar problemas en algunos sistemas Android
+    // Si es necesario para Excel, se puede agregar después de verificar que funciona sin él
     return new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   }
 

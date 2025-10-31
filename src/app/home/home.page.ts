@@ -99,15 +99,6 @@ export class HomePage implements OnInit, OnDestroy {
       permissions: ['reports:read'],
     },
     {
-      id: 'reports-export',
-      title: 'Exportar reportes',
-      subtitle: 'CSV/PDF de inventario, ventas y pedidos',
-      icon: 'download-outline',
-      cssClass: 'export',
-      route: '/reports',
-      permissions: ['reports:write'],
-    },
-    {
       id: 'sales-history',
       title: 'Historial de Ventas',
       subtitle: 'Consulta y análisis de ventas (RF007)',
@@ -649,7 +640,6 @@ export class HomePage implements OnInit, OnDestroy {
         this.router.navigateByUrl('/alerts');
         return;
       case 'reports':
-      case 'reports-export':
         this.router.navigateByUrl('/reports');
         return;
       case 'users':

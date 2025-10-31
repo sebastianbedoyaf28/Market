@@ -46,6 +46,8 @@ import {
   closeCircleOutline,
 } from 'ionicons/icons';
 import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Capacitor } from '@capacitor/core';
+import { Share } from '@capacitor/share';
 import { Sale, SaleFilters, SalesSummary } from '../../models/sales.models';
 import { SalesService } from '../../services/sales.service';
 
@@ -260,12 +262,13 @@ export class SalesListPage implements OnInit {
 
     try {
       const blob = await this.salesService.exportToCSV(this.filters);
-      await this.downloadFile(blob, `ventas_${this.getDateString()}.csv`);
+      const filename = `ventas_${this.getDateString()}.csv`;
+      await this.downloadFile(blob, filename);
       await loading.dismiss();
-    } catch (error) {
+    } catch (error: any) {
       await loading.dismiss();
-      // Error exporting CSV
-      await this.showToast('Error al exportar', 'danger');
+      const errorMsg = error?.message || error?.toString() || 'Error desconocido';
+      await this.showToast(`Error al exportar: ${errorMsg}`, 'danger');
     }
   }
 
@@ -287,21 +290,117 @@ export class SalesListPage implements OnInit {
   }
 
   private async downloadFile(blob: Blob, filename: string) {
-    try {
-      // Convertir Blob a base64
-      const base64 = await this.blobToBase64(blob);
-      
-      // Guardar en el directorio de documentos de la app
-      const result = await Filesystem.writeFile({
-        path: filename,
-        data: base64,
-        directory: Directory.Documents, // Guarda en el directorio de documentos de la app
-      });
-      
-      // Mostrar mensaje de éxito
-      await this.showToast('Archivo descargado correctamente', 'success');
-    } catch (error: any) {
-      // Si no es un dispositivo móvil, usar el método tradicional
+    const platform = Capacitor.getPlatform();
+    
+    // Si estamos en Android o iOS, guardar en múltiples ubicaciones y compartir
+    if (platform === 'android' || platform === 'ios') {
+      try {
+        // Convertir blob a base64
+        let base64: string;
+        
+        if (blob.type.includes('text/') || blob.type.includes('csv')) {
+          // Para CSV, convertir texto a base64 UTF-8
+          const text = await blob.text();
+          base64 = btoa(unescape(encodeURIComponent(text)));
+        } else {
+          // Para PDF y otros binarios
+          base64 = await this.blobToBase64(blob);
+        }
+        
+        // 1. Guardar en Cache primero (para compartir)
+        const cacheResult = await Filesystem.writeFile({
+          path: filename,
+          data: base64,
+          directory: Directory.Cache,
+        });
+        
+        const fileUri = cacheResult.uri;
+        
+        // 2. Guardar en Documents (para acceso directo del usuario)
+        let documentsUri: string | null = null;
+        try {
+          const documentsResult = await Filesystem.writeFile({
+            path: filename,
+            data: base64,
+            directory: Directory.Documents,
+          });
+          documentsUri = documentsResult.uri;
+        } catch (docError) {
+          // Si falla Documents, no es crítico
+        }
+        
+        // 3. Intentar guardar en ExternalStorage si está disponible (Android)
+        let externalUri: string | null = null;
+        if (platform === 'android') {
+          try {
+            // En Android, intentar guardar en Downloads usando ExternalStorage
+            const externalResult = await Filesystem.writeFile({
+              path: `Download/${filename}`, // Guardar en carpeta Download
+              data: base64,
+              directory: Directory.ExternalStorage,
+            });
+            externalUri = externalResult.uri;
+          } catch (externalError) {
+            // ExternalStorage puede requerir permisos adicionales, no es crítico
+          }
+        }
+        
+        // 4. Mostrar diálogo de compartir
+        try {
+          const fileType = filename.endsWith('.csv') ? 'CSV' : 'PDF';
+          await Share.share({
+            title: 'Compartir archivo',
+            text: `Archivo: ${filename}`,
+            url: fileUri,
+            dialogTitle: `Compartir archivo ${fileType}`,
+          });
+          
+          // Informar al usuario dónde está guardado
+          let locationMsg = 'Archivo listo para compartir';
+          if (externalUri) {
+            locationMsg += ' y guardado en Descargas';
+          } else if (documentsUri) {
+            locationMsg += ' y guardado en Documentos de la app';
+          }
+          await this.showToast(locationMsg, 'success');
+        } catch (shareError) {
+          // Si Share falla, informar dónde está guardado
+          let locationMsg = `Archivo guardado: ${filename}`;
+          if (externalUri) {
+            locationMsg = 'Archivo guardado en Descargas';
+          } else if (documentsUri) {
+            locationMsg = 'Archivo guardado en Documentos de la app';
+          } else {
+            locationMsg = 'Archivo guardado en caché';
+          }
+          await this.showToast(locationMsg, 'success');
+        }
+        
+      } catch (error: any) {
+        // Si todo falla, intentar método alternativo
+        try {
+          await this.showToast('Guardando archivo...', 'warning');
+          
+          const base64 = blob.type.includes('text/') || blob.type.includes('csv')
+            ? btoa(unescape(encodeURIComponent(await blob.text())))
+            : await this.blobToBase64(blob);
+          
+          // Guardar en cache como último recurso
+          await Filesystem.writeFile({
+            path: filename,
+            data: base64,
+            directory: Directory.Cache,
+          });
+          
+          await this.showToast('Archivo guardado en caché de la app', 'success');
+        } catch (fallbackError: any) {
+          const errorMsg = error?.message || fallbackError?.message || 'No se pudo guardar el archivo';
+          await this.showToast(`Error: ${errorMsg}`, 'danger');
+          throw error;
+        }
+      }
+    } else {
+      // Si estamos en web, usar el método tradicional
       try {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -311,8 +410,10 @@ export class SalesListPage implements OnInit {
         link.click();
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
-      } catch (fallbackError) {
+        await this.showToast('Archivo descargado correctamente', 'success');
+      } catch (fallbackError: any) {
         await this.showToast('Error al descargar archivo', 'danger');
+        throw fallbackError;
       }
     }
   }
@@ -321,12 +422,21 @@ export class SalesListPage implements OnInit {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onloadend = () => {
-        const base64 = reader.result as string;
-        // Detectar el tipo MIME para el prefijo correcto
-        const mimeType = blob.type === 'application/pdf' ? 'application/pdf' : 'text/csv';
-        resolve(base64.split(',')[1]); // Remover el prefijo data:mimeType;base64,
+        try {
+          const base64 = reader.result as string;
+          // Remover el prefijo data:mimeType;base64,
+          const base64Data = base64.includes(',') ? base64.split(',')[1] : base64;
+          console.log('Base64 convertido exitosamente, longitud:', base64Data.length);
+          resolve(base64Data);
+        } catch (error) {
+          console.error('Error al procesar base64:', error);
+          reject(error);
+        }
       };
-      reader.onerror = reject;
+      reader.onerror = (error) => {
+        console.error('Error en FileReader:', error);
+        reject(error);
+      };
       reader.readAsDataURL(blob);
     });
   }

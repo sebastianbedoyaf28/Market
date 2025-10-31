@@ -31,52 +31,6 @@
     </div>
   </div>
 
-  <div class="metrics-grid">
-    <div class="metric-card">
-      <div class="metric-icon inventory">
-        <ion-icon name="cube-outline"></ion-icon>
-      </div>
-      <div class="metric-info">
-        <h3>Inventario</h3>
-        <p class="metric-value">{{ totalProducts }}</p>
-        <p class="metric-label">Productos</p>
-      </div>
-    </div>
-
-    <div class="metric-card">
-      <div class="metric-icon orders">
-        <ion-icon name="receipt-outline"></ion-icon>
-      </div>
-      <div class="metric-info">
-        <h3>Pedidos</h3>
-        <p class="metric-value">{{ pendingOrders }}</p>
-        <p class="metric-label">Pendientes</p>
-      </div>
-    </div>
-
-    <div class="metric-card">
-      <div class="metric-icon sales">
-        <ion-icon name="card-outline"></ion-icon>
-      </div>
-      <div class="metric-info">
-        <h3>Ventas Hoy</h3>
-        <p class="metric-value">{{ todaySales | currency:'USD':'symbol':'1.0-0' }}</p>
-        <p class="metric-label">Ingresos</p>
-      </div>
-    </div>
-
-    <div class="metric-card">
-      <div class="metric-icon alerts">
-        <ion-icon name="warning-outline"></ion-icon>
-      </div>
-      <div class="metric-info">
-        <h3>Alertas</h3>
-        <p class="metric-value">{{ alertCount }}</p>
-        <p class="metric-label">Pendientes</p>
-      </div>
-    </div>
-  </div>
-
   <div class="modules-section">
     <h2 class="section-title">Módulos del sistema</h2>
     <ng-container *ngIf="modules$ | async as modules">
