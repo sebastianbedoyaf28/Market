@@ -3,8 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { IonicModule, LoadingController, ToastController } from '@ionic/angular';
-import { Observable, Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, startWith, switchMap, takeUntil } from 'rxjs/operators';
+import { BehaviorSubject, Observable, Subject, combineLatest } from 'rxjs';
+import { debounceTime, distinctUntilChanged, map, shareReplay, startWith, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Capacitor } from '@capacitor/core';
 import { Share } from '@capacitor/share';
@@ -21,6 +21,11 @@ import { InventoryProduct, StockStatus } from '../../models/inventory.models';
 export class InventoryPage implements OnInit, OnDestroy {
   filtersForm: FormGroup;
   inventory$!: Observable<InventoryProduct[]>;
+  paginatedInventory$!: Observable<InventoryProduct[]>;
+  readonly pageSize = 10;
+  currentPage = 1;
+  totalPages = 0;
+  totalItems = 0;
   categories$ = this.inventoryService.getCategories();
   providers$ = this.inventoryService.getProviders();
   readonly statuses: Array<{ value: StockStatus; label: string }> = [
@@ -31,6 +36,7 @@ export class InventoryPage implements OnInit, OnDestroy {
   ];
 
   private readonly destroy$ = new Subject<void>();
+  private readonly page$ = new BehaviorSubject<number>(1);
 
   constructor(
     private readonly fb: FormBuilder,
@@ -62,6 +68,29 @@ export class InventoryPage implements OnInit, OnDestroy {
         expiryFrom: filters.expiryFrom || undefined,
         expiryTo: filters.expiryTo || undefined,
       })),
+      tap(() => this.page$.next(1)),
+      shareReplay({ bufferSize: 1, refCount: true }),
+    );
+
+    this.paginatedInventory$ = combineLatest([this.inventory$, this.page$]).pipe(
+      map(([products, page]) => {
+        this.totalItems = products.length;
+        this.totalPages = this.totalItems ? Math.ceil(this.totalItems / this.pageSize) : 0;
+
+        if (!this.totalPages) {
+          this.currentPage = 0;
+          return [];
+        }
+
+        const safePage = Math.min(Math.max(page, 1), this.totalPages);
+        if (safePage !== page) {
+          Promise.resolve().then(() => this.page$.next(safePage));
+        }
+
+        this.currentPage = safePage;
+        const start = (safePage - 1) * this.pageSize;
+        return products.slice(start, start + this.pageSize);
+      }),
     );
 
     this.filtersForm.controls['expiryFrom'].valueChanges
@@ -76,10 +105,37 @@ export class InventoryPage implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+    this.page$.complete();
   }
 
   trackByProduct(_: number, product: InventoryProduct): string {
     return product.id;
+  }
+
+  get rangeStart(): number {
+    if (!this.totalItems || !this.currentPage) {
+      return 0;
+    }
+    return (this.currentPage - 1) * this.pageSize + 1;
+  }
+
+  get rangeEnd(): number {
+    if (!this.totalItems || !this.currentPage) {
+      return 0;
+    }
+    return Math.min(this.currentPage * this.pageSize, this.totalItems);
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.page$.next(this.currentPage + 1);
+    }
+  }
+
+  prevPage(): void {
+    if (this.currentPage > 1) {
+      this.page$.next(this.currentPage - 1);
+    }
   }
 
   onCreateProduct(): void {

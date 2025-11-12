@@ -17,15 +17,35 @@
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
-  <ion-list *ngIf="!loading">
-    <ion-item *ngFor="let o of orders" (click)="open(o)">
+  <ion-list *ngIf="!loading && pagedOrders.length">
+    <ion-item *ngFor="let o of pagedOrders" (click)="open(o)">
       <ion-label>
-        <h2>{{ o.supplierName || o.supplierId }} — {{ o.status }}</h2>
-        <p>Entrega: {{ o.expectedDate | date:'shortDate' }} · {{ o.items.length }} items</p>
+        <h2>{{ o.supplierName || o.supplierId }} - {{ o.status }}</h2>
+        <p>Entrega: {{ o.expectedDate | date:'shortDate' }} - {{ o.items.length }} items</p>
       </ion-label>
       <ion-note slot="end">{{ o.createdAt | date:'short' }}</ion-note>
     </ion-item>
   </ion-list>
+
+  <div class="empty-state" *ngIf="!loading && !pagedOrders.length">
+    <ion-icon name="cube-outline"></ion-icon>
+    <h3>Sin pedidos</h3>
+    <p>No hay pedidos para mostrar.</p>
+  </div>
+
+  <div class="pagination-controls" *ngIf="!loading && totalItems">
+    <div class="pagination-info">
+      Mostrando {{ rangeStart }}-{{ rangeEnd }} de {{ totalItems }}
+    </div>
+    <div class="pagination-buttons" *ngIf="totalPages > 1">
+      <ion-button fill="outline" size="small" (click)="prevPage()" [disabled]="currentPage <= 1">
+        Anterior
+      </ion-button>
+      <ion-button fill="outline" size="small" (click)="nextPage()" [disabled]="currentPage >= totalPages">
+        Siguiente
+      </ion-button>
+    </div>
+  </div>
 
   <ion-spinner *ngIf="loading" class="ion-padding"></ion-spinner>
 </ion-content>

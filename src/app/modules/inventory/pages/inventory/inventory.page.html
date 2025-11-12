@@ -81,37 +81,53 @@
 
   <ng-container *ngIf="inventory$ | async as products">
     <ion-list *ngIf="products.length; else emptyState">
-      <ion-item-sliding *ngFor="let product of products; trackBy: trackByProduct">
-        <ion-item button detail="false" (click)="onOpenProduct(product)">
-          <ion-avatar slot="start" *ngIf="product.imageUrl">
-            <img [src]="product.imageUrl" [alt]="product.name" />
-          </ion-avatar>
-          <ion-label>
-            <h2>{{ product.name }}</h2>
-            <p>
-              SKU: {{ product.sku }} - Categoria: {{ product.category }} - Proveedor: {{ product.provider }}
-            </p>
-            <p>
-              Stock total: {{ product.totalStock }}
-              <ng-container *ngIf="product.nextExpiryDate as expiry">
-                - Proximo vencimiento: {{ expiry | date:'shortDate' }}
-              </ng-container>
-            </p>
-          </ion-label>
-          <ion-badge slot="end" [color]="statusColor(product.status)">
-            {{ statusLabel(product.status) }}
-          </ion-badge>
-        </ion-item>
-        <ion-item-options side="end">
-          <ion-item-option color="primary" (click)="router.navigate(['/inventory/product', product.id, 'edit'])">
-            <ion-icon slot="icon-only" name="create-outline"></ion-icon>
-          </ion-item-option>
-          <ion-item-option color="medium" (click)="onOpenProduct(product)">
-            <ion-icon slot="icon-only" name="open-outline"></ion-icon>
-          </ion-item-option>
-        </ion-item-options>
-      </ion-item-sliding>
+      <ng-container *ngIf="paginatedInventory$ | async as paginated">
+        <ion-item-sliding *ngFor="let product of paginated; trackBy: trackByProduct">
+          <ion-item button detail="false" (click)="onOpenProduct(product)">
+            <ion-avatar slot="start" *ngIf="product.imageUrl">
+              <img [src]="product.imageUrl" [alt]="product.name" />
+            </ion-avatar>
+            <ion-label>
+              <h2>{{ product.name }}</h2>
+              <p>
+                SKU: {{ product.sku }} - Categoria: {{ product.category }} - Proveedor: {{ product.provider }}
+              </p>
+              <p>
+                Stock total: {{ product.totalStock }}
+                <ng-container *ngIf="product.nextExpiryDate as expiry">
+                  - Proximo vencimiento: {{ expiry | date:'shortDate' }}
+                </ng-container>
+              </p>
+            </ion-label>
+            <ion-badge slot="end" [color]="statusColor(product.status)">
+              {{ statusLabel(product.status) }}
+            </ion-badge>
+          </ion-item>
+          <ion-item-options side="end">
+            <ion-item-option color="primary" (click)="router.navigate(['/inventory/product', product.id, 'edit'])">
+              <ion-icon slot="icon-only" name="create-outline"></ion-icon>
+            </ion-item-option>
+            <ion-item-option color="medium" (click)="onOpenProduct(product)">
+              <ion-icon slot="icon-only" name="open-outline"></ion-icon>
+            </ion-item-option>
+          </ion-item-options>
+        </ion-item-sliding>
+      </ng-container>
     </ion-list>
+
+    <div class="pagination-controls" *ngIf="totalItems">
+      <div class="pagination-info">
+        Mostrando {{ rangeStart }}-{{ rangeEnd }} de {{ totalItems }}
+      </div>
+      <div class="pagination-buttons" *ngIf="totalPages > 1">
+        <ion-button fill="outline" size="small" (click)="prevPage()" [disabled]="currentPage <= 1">
+          Anterior
+        </ion-button>
+        <ion-button fill="outline" size="small" (click)="nextPage()" [disabled]="currentPage >= totalPages">
+          Siguiente
+        </ion-button>
+      </div>
+    </div>
   </ng-container>
 
   <ng-template #emptyState>

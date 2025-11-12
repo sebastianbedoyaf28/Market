@@ -34,3 +34,20 @@
   font-size: 48px;
   margin-bottom: 16px;
 }
+
+.pagination-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  color: var(--ion-color-medium);
+  font-size: 0.9rem;
+  gap: 0.75rem;
+}
+
+.pagination-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+

@@ -122,3 +122,19 @@ ion-item {
   }
 }
 
+.pagination-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 0;
+  gap: 0.75rem;
+  color: var(--ion-color-medium);
+  font-size: 0.9rem;
+}
+
+.pagination-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+

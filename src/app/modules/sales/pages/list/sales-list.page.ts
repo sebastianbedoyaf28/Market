@@ -96,6 +96,11 @@ import { SalesService } from '../../services/sales.service';
 export class SalesListPage implements OnInit {
   sales: Sale[] = [];
   filteredSales: Sale[] = [];
+  pagedSales: Sale[] = [];
+  readonly pageSize = 10;
+  currentPage = 1;
+  totalPages = 0;
+  totalItems = 0;
   summary: SalesSummary | null = null;
   isLoading = false;
   showFilterModal = false;
@@ -139,7 +144,7 @@ export class SalesListPage implements OnInit {
       this.salesService.list(this.filters).subscribe({
         next: (sales) => {
           this.sales = sales;
-          this.applySearch();
+          this.applySearch(true);
           this.loadSummary();
           this.isLoading = false;
           if (event) event.target.complete();
@@ -169,25 +174,74 @@ export class SalesListPage implements OnInit {
     });
   }
 
-  applySearch() {
+  applySearch(resetPage = true) {
     if (!this.searchTerm.trim()) {
       this.filteredSales = [...this.sales];
-      return;
+    } else {
+      const term = this.searchTerm.toLowerCase();
+      this.filteredSales = this.sales.filter(
+        (sale) =>
+          sale.productName?.toLowerCase().includes(term) ||
+          sale.productSku?.toLowerCase().includes(term) ||
+          sale.customerName?.toLowerCase().includes(term) ||
+          sale.invoiceNumber?.toLowerCase().includes(term)
+      );
     }
 
-    const term = this.searchTerm.toLowerCase();
-    this.filteredSales = this.sales.filter(
-      (sale) =>
-        sale.productName?.toLowerCase().includes(term) ||
-        sale.productSku?.toLowerCase().includes(term) ||
-        sale.customerName?.toLowerCase().includes(term) ||
-        sale.invoiceNumber?.toLowerCase().includes(term)
-    );
+    this.updatePagination(resetPage);
   }
 
   onSearchChange(event: any) {
     this.searchTerm = event.target.value || '';
     this.applySearch();
+  }
+
+  get rangeStart(): number {
+    if (!this.totalItems || !this.currentPage) {
+      return 0;
+    }
+    return (this.currentPage - 1) * this.pageSize + 1;
+  }
+
+  get rangeEnd(): number {
+    if (!this.totalItems || !this.currentPage) {
+      return 0;
+    }
+    return Math.min(this.currentPage * this.pageSize, this.totalItems);
+  }
+
+  nextPage() {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage += 1;
+      this.updatePagination();
+    }
+  }
+
+  prevPage() {
+    if (this.currentPage > 1) {
+      this.currentPage -= 1;
+      this.updatePagination();
+    }
+  }
+
+  private updatePagination(resetPage = false) {
+    this.totalItems = this.filteredSales.length;
+    this.totalPages = this.totalItems ? Math.ceil(this.totalItems / this.pageSize) : 0;
+
+    if (!this.totalPages) {
+      this.currentPage = 0;
+      this.pagedSales = [];
+      return;
+    }
+
+    if (resetPage || this.currentPage < 1) {
+      this.currentPage = 1;
+    } else if (this.currentPage > this.totalPages) {
+      this.currentPage = this.totalPages;
+    }
+
+    const start = (this.currentPage - 1) * this.pageSize;
+    this.pagedSales = this.filteredSales.slice(start, start + this.pageSize);
   }
 
   openFilterModal() {

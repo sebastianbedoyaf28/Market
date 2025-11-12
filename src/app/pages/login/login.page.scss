@@ -1,12 +1,36 @@
 ﻿@use "sass:color";
+
+:host {
+  --login-background: var(--ion-background-color, #f4f5f8);
+  --login-surface: var(--ion-card-background, #ffffff);
+  --login-input: var(--ion-item-background, #f0f2f7);
+  --login-text: var(--ion-text-color, #1a1a1a);
+  --login-muted: var(--ion-color-medium, #6c757d);
+  --login-border: var(--ion-color-step-200, #dfe3ea);
+  --login-contrast: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :host {
+    --login-background: #1a1a1a;
+    --login-surface: #242424;
+    --login-input: #2d2d2d;
+    --login-text: #ffffff;
+    --login-muted: #adb5bd;
+    --login-border: #404040;
+    --login-contrast: #ffffff;
+  }
+}
+
 // Variables de color
-$primary-color: #007bff;
-$secondary-color: #6c757d;
-$dark-bg: #1a1a1a;
-$input-bg: #2d2d2d;
-$text-light: #ffffff;
-$text-muted: #adb5bd;
-$border-color: #404040;
+$primary-color: var(--ion-color-primary, #007bff);
+$secondary-color: var(--ion-color-secondary, #6c757d);
+$dark-bg: var(--login-background);
+$input-bg: var(--login-input);
+$text-light: var(--login-text);
+$text-muted: var(--login-muted);
+$text-contrast: var(--login-contrast, #ffffff);
+$border-color: var(--login-border);
 
 // Estilos principales
 .login-content {
@@ -32,7 +56,7 @@ $border-color: #404040;
       gap: 1rem;
       
       .logo-icon-large {
-        color: white;
+        color: #{$text-contrast};
         font-size: 3.5rem;
         background: linear-gradient(135deg, #{$primary-color}, #764ba2);
         padding: 1.25rem;
@@ -141,7 +165,7 @@ $border-color: #404040;
   --border-color: #{$text-muted};
   --border-color-checked: #{$primary-color};
   --background-checked: #{$primary-color};
-  --checkmark-color: #{$text-light};
+  --checkmark-color: #{$text-contrast};
 }
 
 .checkbox-label {
@@ -160,7 +184,7 @@ $border-color: #404040;
 // Botones
 .primary-btn {
   --background: #{$primary-color};
-  --color: #{$text-light};
+  --color: #{$text-contrast};
   --border-radius: 8px;
   --padding-top: 1rem;
   --padding-bottom: 1rem;
@@ -237,7 +261,7 @@ $border-color: #404040;
   transition: color 0.2s ease;
   
   &:hover {
-    color: color.adjust($primary-color, $lightness: 10%);
+    color: var(--ion-color-primary-tint, #{color.adjust(#007bff, $lightness: 10%)});
   }
 }
 

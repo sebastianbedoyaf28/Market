@@ -110,8 +110,8 @@
   </div>
 
   <!-- Lista de ventas -->
-  <ion-list *ngIf="!isLoading">
-    <ion-item *ngFor="let sale of filteredSales" button (click)="viewDetail(sale)">
+  <ion-list *ngIf="!isLoading && pagedSales.length">
+    <ion-item *ngFor="let sale of pagedSales" button (click)="viewDetail(sale)">
       <ion-label>
         <h2>
           <strong>{{ sale.productName || 'Producto desconocido' }}</strong>
@@ -139,6 +139,20 @@
   </ion-list>
 
   <!-- Estado vacío -->
+  <div class="pagination-controls" *ngIf="!isLoading && totalItems">
+    <div class="pagination-info">
+      Mostrando {{ rangeStart }}-{{ rangeEnd }} de {{ totalItems }}
+    </div>
+    <div class="pagination-buttons" *ngIf="totalPages > 1">
+      <ion-button fill="outline" size="small" (click)="prevPage()" [disabled]="currentPage <= 1">
+        Anterior
+      </ion-button>
+      <ion-button fill="outline" size="small" (click)="nextPage()" [disabled]="currentPage >= totalPages">
+        Siguiente
+      </ion-button>
+    </div>
+  </div>
+
   <div class="empty-state" *ngIf="!isLoading && filteredSales.length === 0">
     <ion-icon name="receipt-outline"></ion-icon>
     <h2>No hay ventas</h2>
