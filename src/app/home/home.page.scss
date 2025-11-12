@@ -1,14 +1,32 @@
-﻿// Variables de color
-$primary-color: #007bff;
-$secondary-color: #6c757d;
-$dark-bg: #1a1a1a;
-$card-bg: #2d2d2d;
-$text-light: #ffffff;
-$text-muted: #adb5bd;
-$success-color: #28a745;
-$danger-color: #dc3545;
-$warning-color: #ffc107;
-$info-color: #17a2b8;
+﻿:host {
+  --dashboard-background: var(--ion-background-color, #ffffff);
+  --dashboard-surface: var(--ion-card-background, #ffffff);
+  --dashboard-text: var(--ion-text-color, #1a1a1a);
+  --dashboard-text-muted: var(--ion-color-medium, #6c757d);
+  --dashboard-text-contrast: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :host {
+    --dashboard-background: #1a1a1a;
+    --dashboard-surface: #2d2d2d;
+    --dashboard-text: #ffffff;
+    --dashboard-text-muted: #adb5bd;
+  }
+}
+
+// Variables de color
+$primary-color: var(--ion-color-primary, #007bff);
+$secondary-color: var(--ion-color-secondary, #6c757d);
+$dark-bg: var(--dashboard-background);
+$card-bg: var(--dashboard-surface);
+$text-light: var(--dashboard-text);
+$text-muted: var(--dashboard-text-muted);
+$text-contrast: var(--dashboard-text-contrast, #ffffff);
+$success-color: var(--ion-color-success, #28a745);
+$danger-color: var(--ion-color-danger, #dc3545);
+$warning-color: var(--ion-color-warning, #ffc107);
+$info-color: var(--ion-color-tertiary, #17a2b8);
 
 // Estilos para el logo en el header
 ion-toolbar {
@@ -93,7 +111,7 @@ ion-toolbar {
 .dashboard-header {
   padding: 2rem 1.5rem 1.5rem;
   text-align: center;
-  background: linear-gradient(135deg, #{$primary-color}20, #{$dark-bg});
+  background: linear-gradient(135deg, rgba(var(--ion-color-primary-rgb, 0, 123, 255), 0.15), #{$dark-bg});
   border-radius: 0 0 2rem 2rem;
   margin-bottom: 1.5rem;
 
@@ -184,7 +202,7 @@ ion-toolbar {
 
   &:hover {
     transform: translateY(-2px);
-    border-color: #{$primary-color}40;
+    border-color: rgba(var(--ion-color-primary-rgb, 0, 123, 255), 0.25);
     box-shadow: 0 8px 25px rgba(0, 123, 255, 0.15);
   }
 
@@ -214,22 +232,22 @@ ion-toolbar {
 
     &.inventory {
       background: linear-gradient(135deg, #{$primary-color}, #{$info-color});
-      color: #{$text-light};
+      color: #{$text-contrast};
     }
 
     &.orders {
       background: linear-gradient(135deg, #{$warning-color}, #{$secondary-color});
-      color: #{$text-light};
+      color: #{$text-contrast};
     }
 
     &.sales {
       background: linear-gradient(135deg, #{$success-color}, #{$primary-color});
-      color: #{$text-light};
+      color: #{$text-contrast};
     }
 
     &.alerts {
       background: linear-gradient(135deg, #{$danger-color}, #{$warning-color});
-      color: #{$text-light};
+      color: #{$text-contrast};
     }
   }
 
@@ -321,7 +339,7 @@ ion-toolbar {
 
   &:hover {
     transform: translateY(-4px);
-    border-color: #{$primary-color}40;
+    border-color: rgba(var(--ion-color-primary-rgb, 0, 123, 255), 0.25);
     box-shadow: 0 12px 30px rgba(0, 123, 255, 0.2);
   }
 
@@ -355,47 +373,47 @@ ion-toolbar {
 
   &.inventory {
     background: linear-gradient(135deg, #{$primary-color}, #{$info-color});
-    color: #{$text-light};
+    color: #{$text-contrast};
   }
 
   &.orders {
     background: linear-gradient(135deg, #{$warning-color}, #{$secondary-color});
-    color: #{$text-light};
+    color: #{$text-contrast};
   }
 
   &.sales {
     background: linear-gradient(135deg, #{$success-color}, #{$primary-color});
-    color: #{$text-light};
+    color: #{$text-contrast};
   }
 
   &.reports {
     background: linear-gradient(135deg, #{$info-color}, #{$primary-color});
-    color: #{$text-light};
+    color: #{$text-contrast};
   }
 
   &.users {
     background: linear-gradient(135deg, #{$secondary-color}, #{$primary-color});
-    color: #{$text-light};
+    color: #{$text-contrast};
   }
 
   &.alerts {
     background: linear-gradient(135deg, #{$danger-color}, #{$warning-color});
-    color: #{$text-light};
+    color: #{$text-contrast};
   }
 
   &.roles {
     background: linear-gradient(135deg, #4c51bf, #6f42c1);
-    color: #{$text-light};
+    color: #{$text-contrast};
   }
 
   &.import {
     background: linear-gradient(135deg, #6f42c1, #{$primary-color});
-    color: #{$text-light};
+    color: #{$text-contrast};
   }
 
   &.export {
     background: linear-gradient(135deg, #17a2b8, #{$success-color});
-    color: #{$text-light};
+    color: #{$text-contrast};
   }
 }
 

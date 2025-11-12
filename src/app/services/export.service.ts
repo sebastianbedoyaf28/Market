@@ -3,9 +3,9 @@ import { Observable, from, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { saveAs } from 'file-saver';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 import { supabase } from '../core/supabase-client';
 import { AuthService } from '../core/services/auth.service';
 import { InventoryService } from '../modules/inventory/services/inventory.service';
@@ -56,7 +56,7 @@ export class ExportService {
   /**
    * Exporta datos según las opciones especificadas
    */
-  async exportData(options: ExportOptions): Promise<{ success: boolean; fileName?: string; error?: string }> {
+  async exportData(options: ExportOptions): Promise<{ success: boolean; fileName?: string; message?: string; error?: string }> {
     try {
       const user = this.auth.user;
       if (!user) {
@@ -102,11 +102,9 @@ export class ExportService {
       };
 
       // Exportar según el formato
-      if (options.format === 'csv') {
-        await this.exportToCSV(data, fileName, metadata, options.includeMetadata);
-      } else {
-        await this.exportToPDF(data, fileName, metadata, options.type);
-      }
+      const downloadMessage = options.format === 'csv'
+        ? await this.exportToCSV(data, fileName, metadata, options.includeMetadata)
+        : await this.exportToPDF(data, fileName, metadata, options.type);
 
       // Registrar en historial
       await this.saveExportHistory({
@@ -121,7 +119,7 @@ export class ExportService {
         createdAt: new Date().toISOString()
       });
 
-      return { success: true, fileName: `${fileName}.${options.format}` };
+      return { success: true, fileName: `${fileName}.${options.format}`, message: downloadMessage };
     } catch (error: any) {
       let msg = error?.message || error?.toString() || 'Error desconocido';
       if (typeof error === 'object') {
@@ -270,7 +268,7 @@ export class ExportService {
   /**
    * Exporta datos a CSV
    */
-  private async exportToCSV(data: any[], fileName: string, metadata: ExportMetadata, includeMetadata = true): Promise<void> {
+  private async exportToCSV(data: any[], fileName: string, metadata: ExportMetadata, includeMetadata = true): Promise<string> {
     let csvContent = '';
 
     // Agregar metadata si se solicita
@@ -304,13 +302,13 @@ export class ExportService {
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     
     // Guardar archivo usando el método apropiado para la plataforma
-    await this.saveFile(blob, `${fileName}.csv`);
+    return await this.saveFile(blob, `${fileName}.csv`);
   }
 
   /**
    * Exporta datos a PDF
    */
-  private async exportToPDF(data: any[], fileName: string, metadata: ExportMetadata, reportType: string): Promise<void> {
+  private async exportToPDF(data: any[], fileName: string, metadata: ExportMetadata, reportType: string): Promise<string> {
     const doc = new jsPDF('l', 'mm', 'a4'); // Landscape orientation
     
     // Configurar fuente
@@ -386,7 +384,7 @@ export class ExportService {
 
     // Guardar PDF usando el método apropiado para la plataforma
     const blob = doc.output('blob');
-    await this.saveFile(blob, `${fileName}.pdf`);
+    return await this.saveFile(blob, `${fileName}.pdf`);
   }
 
   /**
@@ -470,31 +468,113 @@ export class ExportService {
 
   /**
    * Guarda un archivo usando el método apropiado según la plataforma
-   * En Android/iOS usa Filesystem de Capacitor, en web usa saveAs
+   * En Android/iOS usa Filesystem de Capacitor; en web genera una descarga temporal
    */
-  private async saveFile(blob: Blob, filename: string): Promise<void> {
+  private async saveFile(blob: Blob, filename: string): Promise<string> {
     const platform = Capacitor.getPlatform();
-    
-    // Si estamos en Android o iOS, usar Filesystem de Capacitor
+
     if (platform === 'android' || platform === 'ios') {
       try {
-        // Convertir Blob a base64
-        const base64 = await this.blobToBase64(blob);
-        
-        // Guardar en el directorio de documentos de la app
-        await Filesystem.writeFile({
+        let base64: string;
+
+        if (blob.type.includes('text/') || blob.type.includes('csv')) {
+          const text = await blob.text();
+          base64 = btoa(unescape(encodeURIComponent(text)));
+        } else {
+          base64 = await this.blobToBase64(blob);
+        }
+
+        const cacheResult = await Filesystem.writeFile({
           path: filename,
           data: base64,
-          directory: Directory.Documents,
+          directory: Directory.Cache,
         });
-      } catch (error) {
-        // Si falla, intentar con el método web como fallback
-        console.error('Error al guardar con Filesystem, usando fallback:', error);
-        saveAs(blob, filename);
+
+        const fileUri = cacheResult.uri;
+
+        let documentsUri: string | null = null;
+        try {
+          const documentsResult = await Filesystem.writeFile({
+            path: filename,
+            data: base64,
+            directory: Directory.Documents,
+          });
+          documentsUri = documentsResult.uri;
+        } catch {
+          // Ignorar error al guardar en documentos
+        }
+
+        let externalUri: string | null = null;
+        if (platform === 'android') {
+          try {
+            const externalResult = await Filesystem.writeFile({
+              path: `Download/${filename}`,
+              data: base64,
+              directory: Directory.ExternalStorage,
+            });
+            externalUri = externalResult.uri;
+          } catch {
+            // ExternalStorage puede requerir permisos adicionales
+          }
+        }
+
+        try {
+          const fileType = filename.endsWith('.csv') ? 'CSV' : 'PDF';
+          await Share.share({
+            title: 'Compartir archivo',
+            text: `Archivo: ${filename}`,
+            url: fileUri,
+            dialogTitle: `Compartir archivo ${fileType}`,
+          });
+
+          let locationMsg = `Archivo ${filename} listo para compartir`;
+          if (externalUri) {
+            locationMsg += ' y guardado en Descargas';
+          } else if (documentsUri) {
+            locationMsg += ' y guardado en Documentos de la app';
+          }
+          return locationMsg;
+        } catch {
+          if (externalUri) {
+            return `Archivo ${filename} guardado en Descargas`;
+          }
+          if (documentsUri) {
+            return `Archivo ${filename} guardado en Documentos de la app`;
+          }
+          return `Archivo ${filename} guardado en caché`;
+        }
+      } catch (error: any) {
+        try {
+          const base64 = blob.type.includes('text/') || blob.type.includes('csv')
+            ? btoa(unescape(encodeURIComponent(await blob.text())))
+            : await this.blobToBase64(blob);
+
+          await Filesystem.writeFile({
+            path: filename,
+            data: base64,
+            directory: Directory.Cache,
+          });
+
+          return `Archivo ${filename} guardado en caché de la app`;
+        } catch (fallbackError: any) {
+          const errorMsg = error?.message || fallbackError?.message || 'No se pudo guardar el archivo';
+          throw new Error(errorMsg);
+        }
       }
     } else {
-      // En web, usar saveAs tradicional
-      saveAs(blob, filename);
+      try {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        return `Archivo ${filename} descargado correctamente`;
+      } catch {
+        throw new Error('Error al descargar archivo');
+      }
     }
   }
 

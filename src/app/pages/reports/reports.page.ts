@@ -169,10 +169,14 @@ export class ReportsPage implements OnInit {
       const result = await this.exportService.exportData(this.exportOptions);
       
       if (result.success) {
-        await this.showToast(
-          `Reporte ${result.fileName} descargado exitosamente`, 
-          'success'
-        );
+        const defaultMessage = result.fileName
+          ? `Reporte ${result.fileName} exportado correctamente`
+          : 'Reporte exportado correctamente';
+        const successMessage = result.message
+          ? `${defaultMessage}. ${result.message}`
+          : `${defaultMessage}. Archivo descargado exitosamente`;
+
+        await this.showToast(successMessage, 'success');
         // Recargar historial
         await this.loadExportHistory();
       } else {
