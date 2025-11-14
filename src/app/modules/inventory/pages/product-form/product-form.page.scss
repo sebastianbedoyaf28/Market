@@ -6,6 +6,50 @@
   }
 }
 
+// Guía del formulario
+ion-toolbar ion-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  
+  ion-icon {
+    color: var(--ion-color-primary);
+    font-size: 20px;
+  }
+}
+
+// Campos obligatorios
+.required {
+  color: var(--ion-color-danger);
+  margin-right: 4px;
+  font-size: 16px;
+}
+
+// Badge opcional
+.optional-badge {
+  display: inline-block;
+  background: var(--ion-color-success);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-right: 6px;
+  text-transform: uppercase;
+}
+
+// Texto de ayuda
+.help-text {
+  display: block;
+  margin-top: 4px;
+  
+  small {
+    font-size: 12px;
+    font-style: italic;
+  }
+}
+
 .form {
   display: flex;
   flex-direction: column;

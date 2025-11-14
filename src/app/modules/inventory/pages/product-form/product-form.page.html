@@ -11,6 +11,14 @@
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
+  
+  <!-- Guía del formulario -->
+  <ion-toolbar color="light">
+    <ion-note class="ion-padding">
+      <ion-icon name="information-circle-outline"></ion-icon>
+      Los campos marcados con <strong>*</strong> son obligatorios
+    </ion-note>
+  </ion-toolbar>
 </ion-header>
 
 <ion-content>
@@ -21,34 +29,75 @@
       </ion-card-header>
       <ion-card-content>
         <ion-item>
-          <ion-label position="stacked">Nombre</ion-label>
-          <ion-input formControlName="name"></ion-input>
+          <ion-label position="stacked">
+            <strong class="required">*</strong> Nombre
+            <ion-text color="medium" class="help-text">
+              <small>Nombre descriptivo del producto</small>
+            </ion-text>
+          </ion-label>
+          <ion-input formControlName="name" placeholder="Ej: Arroz Premium 1kg"></ion-input>
         </ion-item>
+        
         <ion-item>
-          <ion-label position="stacked">SKU</ion-label>
-          <ion-input formControlName="sku"></ion-input>
+          <ion-label position="stacked">
+            <strong class="required">*</strong> SKU
+            <ion-text color="medium" class="help-text">
+              <small>Código único de identificación</small>
+            </ion-text>
+          </ion-label>
+          <ion-input formControlName="sku" placeholder="Ej: ARR-PREM-001"></ion-input>
         </ion-item>
+        
         <ion-item>
-          <ion-label position="stacked">Categoría</ion-label>
-          <ion-input formControlName="category"></ion-input>
+          <ion-label position="stacked">
+            <strong class="required">*</strong> Categoría
+            <ion-text color="medium" class="help-text">
+              <small>Tipo o clasificación del producto</small>
+            </ion-text>
+          </ion-label>
+          <ion-input formControlName="category" placeholder="Ej: Granos y Cereales"></ion-input>
         </ion-item>
+        
         <ion-item>
-          <ion-label position="stacked">Proveedor</ion-label>
-          <ion-input formControlName="provider"></ion-input>
+          <ion-label position="stacked">
+            <strong class="required">*</strong> Proveedor
+            <ion-text color="medium" class="help-text">
+              <small>Nombre del proveedor principal</small>
+            </ion-text>
+          </ion-label>
+          <ion-input formControlName="provider" placeholder="Ej: Distribuidora ABC"></ion-input>
         </ion-item>
+        
         <div class="prices">
           <ion-item>
-            <ion-label position="stacked">Precio costo</ion-label>
-            <ion-input type="number" formControlName="costPrice"></ion-input>
+            <ion-label position="stacked">
+              <strong class="required">*</strong> Precio costo
+              <ion-text color="medium" class="help-text">
+                <small>Costo de compra</small>
+              </ion-text>
+            </ion-label>
+            <ion-input type="number" formControlName="costPrice" placeholder="0.00"></ion-input>
           </ion-item>
+          
           <ion-item>
-            <ion-label position="stacked">Precio venta</ion-label>
-            <ion-input type="number" formControlName="salePrice"></ion-input>
+            <ion-label position="stacked">
+              <strong class="required">*</strong> Precio venta
+              <ion-text color="medium" class="help-text">
+                <small>Precio al público</small>
+              </ion-text>
+            </ion-label>
+            <ion-input type="number" formControlName="salePrice" placeholder="0.00"></ion-input>
           </ion-item>
         </div>
+        
         <ion-item>
-          <ion-label position="stacked">Imagen (URL opcional)</ion-label>
-          <ion-input formControlName="imageUrl"></ion-input>
+          <ion-label position="stacked">
+            <span class="optional-badge">Opcional</span> Imagen (URL)
+            <ion-text color="medium" class="help-text">
+              <small>URL de la imagen del producto</small>
+            </ion-text>
+          </ion-label>
+          <ion-input formControlName="imageUrl" placeholder="https://ejemplo.com/imagen.jpg"></ion-input>
         </ion-item>
       </ion-card-content>
     </ion-card>
@@ -68,20 +117,43 @@
             </ion-card-header>
             <ion-card-content>
               <ion-item>
-                <ion-label position="stacked">Número de lote</ion-label>
-                <ion-input formControlName="lotNumber"></ion-input>
+                <ion-label position="stacked">
+                  <strong class="required">*</strong> Número de lote
+                  <ion-text color="medium" class="help-text">
+                    <small>Identificador del lote</small>
+                  </ion-text>
+                </ion-label>
+                <ion-input formControlName="lotNumber" placeholder="Ej: LT-2025-001"></ion-input>
               </ion-item>
+              
               <ion-item>
-                <ion-label position="stacked">Cantidad inicial</ion-label>
-                <ion-input type="number" formControlName="quantity"></ion-input>
+                <ion-label position="stacked">
+                  <strong class="required">*</strong> Cantidad inicial
+                  <ion-text color="medium" class="help-text">
+                    <small>Unidades en este lote</small>
+                  </ion-text>
+                </ion-label>
+                <ion-input type="number" formControlName="quantity" placeholder="0"></ion-input>
               </ion-item>
+              
               <ion-item>
-                <ion-label position="stacked">Fecha de vencimiento</ion-label>
+                <ion-label position="stacked">
+                  <span class="optional-badge">Opcional</span> Fecha de vencimiento
+                  <ion-text color="medium" class="help-text">
+                    <small>Si aplica</small>
+                  </ion-text>
+                </ion-label>
                 <ion-input type="date" formControlName="expiryDate"></ion-input>
               </ion-item>
+              
               <ion-item>
-                <ion-label position="stacked">Proveedor lote</ion-label>
-                <ion-input formControlName="provider"></ion-input>
+                <ion-label position="stacked">
+                  <span class="optional-badge">Opcional</span> Proveedor lote
+                  <ion-text color="medium" class="help-text">
+                    <small>Si difiere del proveedor principal</small>
+                  </ion-text>
+                </ion-label>
+                <ion-input formControlName="provider" placeholder="Ej: Proveedor Específico"></ion-input>
               </ion-item>
             </ion-card-content>
           </ion-card>

@@ -18,6 +18,7 @@ interface RecentActivity {
   description: string;
   time: string;
   color: string;
+  timestamp: number; // Timestamp en milisegundos para ordenar y filtrar
 }
 
 interface ModuleCard {
@@ -53,6 +54,12 @@ export class HomePage implements OnInit, OnDestroy {
 
   // Canales de subscripción en tiempo real
   private realtimeChannels: RealtimeChannel[] = [];
+  
+  // Intervalo para limpiar actividades antiguas
+  private cleanupInterval: any;
+  
+  // Tiempo máximo de actividad en milisegundos (24 horas)
+  private readonly MAX_ACTIVITY_AGE = 24 * 60 * 60 * 1000;
 
   readonly moduleCards: ModuleCard[] = [
     {
@@ -103,7 +110,7 @@ export class HomePage implements OnInit, OnDestroy {
     {
       id: 'sales-history',
       title: 'Historial de Ventas',
-      subtitle: 'Consulta y análisis de ventas (RF007)',
+      subtitle: 'Consulta y análisis de ventas',
       icon: 'receipt-outline',
       cssClass: 'sales',
       route: '/sales',
@@ -112,7 +119,7 @@ export class HomePage implements OnInit, OnDestroy {
     {
       id: 'sales-import',
       title: 'Importar ventas',
-      subtitle: 'CSV/Excel desde sistemas externos (RF006)',
+      subtitle: 'CSV/Excel desde sistemas externos',
       icon: 'cloud-upload-outline',
       cssClass: 'import',
       route: '/sales-import',
@@ -140,36 +147,7 @@ export class HomePage implements OnInit, OnDestroy {
 
   readonly modules$: Observable<ModuleWithAccess[]>;
 
-  recentActivities: RecentActivity[] = [
-    {
-      icon: 'add-circle-outline',
-      title: 'Nuevo producto agregado',
-      description: 'Producto "Arroz Premium" agregado al inventario',
-      time: '5 min',
-      color: 'success',
-    },
-    {
-      icon: 'receipt-outline',
-      title: 'Pedido recibido',
-      description: 'Pedido #1234 marcado como recibido',
-      time: '15 min',
-      color: 'primary',
-    },
-    {
-      icon: 'card-outline',
-      title: 'Venta registrada',
-      description: 'Venta por $45.50 procesada',
-      time: '1 hora',
-      color: 'success',
-    },
-    {
-      icon: 'warning-outline',
-      title: 'Stock bajo',
-      description: 'Producto "Leche" por debajo del mÃ­nimo',
-      time: '2 horas',
-      color: 'warning',
-    },
-  ];
+  recentActivities: RecentActivity[] = [];
 
   constructor(
     private products: ProductService,
@@ -198,6 +176,11 @@ export class HomePage implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadDashboardData();
     this.setupRealtimeSubscriptions();
+    
+    // Configurar limpieza automática cada 5 minutos
+    this.cleanupInterval = setInterval(() => {
+      this.cleanOldActivities();
+    }, 5 * 60 * 1000);
   }
 
   ngOnDestroy(): void {
@@ -206,6 +189,11 @@ export class HomePage implements OnInit, OnDestroy {
       supabase().removeChannel(channel);
     });
     this.realtimeChannels = [];
+    
+    // Limpiar intervalo de limpieza
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+    }
   }
 
   private setupRealtimeSubscriptions(): void {
@@ -316,72 +304,83 @@ export class HomePage implements OnInit, OnDestroy {
   private async updateRecentActivities(): Promise<void> {
     try {
       const allActivities: RecentActivity[] = [];
+      const now = Date.now();
+      const last24Hours = new Date(now - this.MAX_ACTIVITY_AGE).toISOString();
       
-      // 1. Actividades de productos
+      // 1. Actividades de productos (últimas 24 horas)
       try {
         const { data: products } = await supabase()
           .from('products')
           .select('id, name, created_at')
+          .gte('created_at', last24Hours)
           .order('created_at', { ascending: false })
-          .limit(5);
+          .limit(10);
         
         (products || []).forEach((row: any) => {
+          const timestamp = new Date(row.created_at).getTime();
           allActivities.push({
             icon: 'add-circle-outline',
             title: 'Nuevo producto',
             description: `${row.name || 'Producto'} agregado`,
             time: this.relativeTime(row.created_at),
             color: 'success',
+            timestamp,
           });
         });
       } catch (error) {
         // Error cargando productos recientes
       }
 
-      // 2. Actividades de inventario
+      // 2. Actividades de inventario (últimas 24 horas)
       try {
         const { data: inventory } = await supabase()
           .from('inventory_products')
           .select('id, name, created_at')
+          .gte('created_at', last24Hours)
           .order('created_at', { ascending: false })
-          .limit(5);
+          .limit(10);
         
         (inventory || []).forEach((row: any) => {
+          const timestamp = new Date(row.created_at).getTime();
           allActivities.push({
             icon: 'archive-outline',
             title: 'Inventario',
             description: `${row.name || 'Producto'} registrado`,
             time: this.relativeTime(row.created_at),
             color: 'success',
+            timestamp,
           });
         });
       } catch (error) {
         // Error cargando inventario reciente
       }
 
-      // 3. Actividades de carritos (pedidos)
+      // 3. Actividades de carritos (últimas 24 horas)
       try {
         const { data: carts } = await supabase()
           .from('carts')
           .select('id, status, created_at')
+          .gte('created_at', last24Hours)
           .order('created_at', { ascending: false })
-          .limit(5);
+          .limit(10);
         
         (carts || []).forEach((row: any) => {
           const isOrdered = row.status === 'ordered';
+          const timestamp = new Date(row.created_at).getTime();
           allActivities.push({
             icon: isOrdered ? 'receipt-outline' : 'cart-outline',
             title: isOrdered ? 'Pedido confirmado' : 'Carrito creado',
             description: `Pedido ${row.id.slice(0, 8)}... ${isOrdered ? 'confirmado' : 'creado'}`,
             time: this.relativeTime(row.created_at),
             color: isOrdered ? 'primary' : 'medium',
+            timestamp,
           });
         });
       } catch (error) {
         // Error cargando carritos recientes
       }
 
-      // 4. Actividades de items de carritos
+      // 4. Actividades de items de carritos (últimas 24 horas)
       try {
         const { data: cartItems } = await supabase()
           .from('cart_items')
@@ -392,24 +391,27 @@ export class HomePage implements OnInit, OnDestroy {
             product_id,
             products (name)
           `)
+          .gte('created_at', last24Hours)
           .order('created_at', { ascending: false })
-          .limit(5);
+          .limit(10);
         
         (cartItems || []).forEach((row: any) => {
           const productName = row.products?.name || 'Producto';
+          const timestamp = new Date(row.created_at).getTime();
           allActivities.push({
             icon: 'cart-outline',
             title: 'Item agregado al carrito',
             description: `${row.qty}x ${productName}`,
             time: this.relativeTime(row.created_at),
             color: 'primary',
+            timestamp,
           });
         });
       } catch (error) {
         // Error cargando items de carrito
       }
 
-      // 5. Actividades de órdenes de compra
+      // 5. Actividades de órdenes de compra (últimas 24 horas)
       try {
         const { data: orders } = await supabase()
           .from('purchase_orders')
@@ -420,11 +422,13 @@ export class HomePage implements OnInit, OnDestroy {
             created_at,
             suppliers (name)
           `)
+          .gte('created_at', last24Hours)
           .order('created_at', { ascending: false })
-          .limit(5);
+          .limit(10);
         
         (orders || []).forEach((row: any) => {
           const supplierName = row.suppliers?.name || 'Proveedor';
+          const timestamp = new Date(row.created_at).getTime();
           let statusText = '';
           let statusColor: 'primary' | 'success' | 'warning' | 'danger' | 'medium' = 'medium';
           
@@ -455,13 +459,14 @@ export class HomePage implements OnInit, OnDestroy {
             description: `${supplierName} - ${row.id.slice(0, 8)}...`,
             time: this.relativeTime(row.created_at),
             color: statusColor,
+            timestamp,
           });
         });
       } catch (error) {
         // Error cargando órdenes de compra
       }
 
-      // 6. Actividades de items de órdenes de compra
+      // 6. Actividades de items de órdenes de compra (últimas 24 horas)
       try {
         const { data: orderItems } = await supabase()
           .from('purchase_order_items')
@@ -472,12 +477,14 @@ export class HomePage implements OnInit, OnDestroy {
             created_at,
             inventory_products!inner (name)
           `)
+          .gte('created_at', last24Hours)
           .order('created_at', { ascending: false })
-          .limit(5);
+          .limit(10);
         
         (orderItems || []).forEach((row: any) => {
           const productName = row.inventory_products?.name || 'Producto';
           const received = row.quantity_received > 0;
+          const timestamp = new Date(row.created_at).getTime();
           
           allActivities.push({
             icon: received ? 'checkmark-circle-outline' : 'cube-outline',
@@ -487,13 +494,14 @@ export class HomePage implements OnInit, OnDestroy {
               : `${row.quantity_ordered}x ${productName} ordenado`,
             time: this.relativeTime(row.created_at),
             color: received ? 'success' : 'primary',
+            timestamp,
           });
         });
       } catch (error) {
         // Error cargando items de órdenes
       }
 
-      // 7. Actividades de ventas
+      // 7. Actividades de ventas (últimas 24 horas)
       try {
         const { data: sales } = await supabase()
           .from('sales')
@@ -504,45 +512,51 @@ export class HomePage implements OnInit, OnDestroy {
             sale_date,
             products!inner (name)
           `)
+          .gte('sale_date', last24Hours)
           .order('sale_date', { ascending: false })
-          .limit(5);
+          .limit(10);
         
         (sales || []).forEach((row: any) => {
           const productName = row.products?.name || 'Producto';
+          const timestamp = new Date(row.sale_date).getTime();
           allActivities.push({
             icon: 'cash-outline',
             title: 'Venta registrada',
             description: `${row.quantity}x ${productName} - $${Number(row.total_price).toFixed(2)}`,
             time: this.relativeTime(row.sale_date),
             color: 'success',
+            timestamp,
           });
         });
       } catch (error) {
         // Error cargando ventas recientes
       }
 
-      // Ordenar todas las actividades por tiempo (más recientes primero)
-      allActivities.sort((a, b) => {
-        // Convertir tiempo relativo a timestamp para ordenar correctamente
-        const getTimestamp = (timeStr: string): number => {
-          if (timeStr === 'ahora') return Date.now();
-          const match = timeStr.match(/(\d+)\s*(min|h|d)/);
-          if (!match) return 0;
-          const value = parseInt(match[1]);
-          const unit = match[2];
-          const now = Date.now();
-          if (unit === 'min') return now - value * 60000;
-          if (unit === 'h') return now - value * 3600000;
-          if (unit === 'd') return now - value * 86400000;
-          return 0;
-        };
-        return getTimestamp(b.time) - getTimestamp(a.time);
-      });
+      // Ordenar todas las actividades por timestamp (más recientes primero)
+      allActivities.sort((a, b) => b.timestamp - a.timestamp);
 
-      // Tomar solo las 10 más recientes
-      this.recentActivities = allActivities.slice(0, 10);
+      // Tomar solo las 15 más recientes y actualizar la lista
+      this.recentActivities = allActivities.slice(0, 15);
     } catch (error) {
       // Error actualizando actividades recientes
+    }
+  }
+  
+  /**
+   * Limpia actividades que tienen más de 24 horas
+   */
+  private cleanOldActivities(): void {
+    const now = Date.now();
+    const cutoffTime = now - this.MAX_ACTIVITY_AGE;
+    
+    // Filtrar actividades que aún están dentro del rango de 24 horas
+    this.recentActivities = this.recentActivities.filter(
+      activity => activity.timestamp >= cutoffTime
+    );
+    
+    // Si después del filtrado hay muy pocas actividades, recargar desde la BD
+    if (this.recentActivities.length < 5) {
+      void this.updateRecentActivities();
     }
   }
 
@@ -604,25 +618,8 @@ export class HomePage implements OnInit, OnDestroy {
       this.pendingOrders = await this.carts.countPendingOrders().catch(() => 0);
       this.todaySales = await this.carts.sumTodaySales().catch(() => 0);
 
-      const orderActivities = await this.carts.recentActivities(10).catch(() => []);
-      let recentInv: RecentActivity[] = [];
-      try {
-        const { data } = await supabase()
-          .from('inventory_products')
-          .select('id, name, created_at')
-          .order('created_at', { ascending: false })
-          .limit(10);
-        recentInv = (data || []).map((row: any) => ({
-          icon: 'archive-outline',
-          title: 'Inventario',
-          description: `${row.name || 'Producto'} registrado`,
-          time: this.relativeTime(row.created_at),
-          color: 'success',
-        }));
-      } catch {
-        recentInv = [];
-      }
-      this.recentActivities = [...orderActivities, ...recentInv].slice(0, 10);
+      // Cargar actividades recientes desde todas las fuentes
+      await this.updateRecentActivities();
     } catch (error) {
       // Error cargando datos del dashboard
     } finally {
