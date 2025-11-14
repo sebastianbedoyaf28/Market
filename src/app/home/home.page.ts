@@ -2,13 +2,15 @@
 import { CommonModule } from '@angular/common';
 import { IonicModule, ToastController, MenuController } from '@ionic/angular';
 import { Router } from '@angular/router';
-import { Observable, firstValueFrom, of } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { Product, ProductService } from '../services/product.service';
 import { CartService } from '../services/cart.service';
 import { AuthService } from '../core/services/auth.service';
 import { InventoryService } from '../modules/inventory/services/inventory.service';
 import { supabase } from '../core/supabase-client';
 import { RealtimeChannel } from '@supabase/supabase-js';
+import { UserContextService } from '../core/services/user-context.service';
 
 interface RecentActivity {
   icon: string;
@@ -177,9 +179,18 @@ export class HomePage implements OnInit, OnDestroy {
     private router: Router,
     private toast: ToastController,
     private menu: MenuController,
+    private readonly userContext: UserContextService,
   ) {
-    // TODO: Rehabilitar las verificaciones de permisos cuando sea necesario.
-    this.modules$ = of(this.moduleCards.map(card => ({ ...card, allowed: true })));
+    this.modules$ = this.userContext.permissions$.pipe(
+      map(permissions => {
+        const list = this.moduleCards.map(card => {
+          const required = Array.isArray(card.permissions) ? card.permissions : [card.permissions];
+          const allowed = required.every(permission => permissions.includes(permission));
+          return { ...card, allowed };
+        });
+        return list.filter(module => module.allowed);
+      }),
+    );
   }
 
   ngOnInit(): void {
@@ -703,7 +714,6 @@ export class HomePage implements OnInit, OnDestroy {
     await toast.present();
   }
 }
-
 
 
 
