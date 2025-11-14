@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes, PreloadAllModules } from '@angular/router';
 import { AuthGuard } from './core/guards/auth.guard';
-import { PermissionGuard } from './core/guards/permission.guard';
 
 const routes: Routes = [
   { path: 'login', loadComponent: () => import('./pages/login/login.page').then(m => m.LoginPage) },
@@ -10,57 +9,59 @@ const routes: Routes = [
   { path: 'reset-password', loadComponent: () => import('./pages/reset-password/reset-password.page').then(m => m.ResetPasswordPage) },
   {
     path: 'inventory',
+    // TODO: Re-enable PermissionGuard when role-based access is required again.
+    // canActivate: [AuthGuard, PermissionGuard],
     loadChildren: () => import('./modules/inventory/inventory.module').then(m => m.InventoryModule),
-    canActivate: [AuthGuard, PermissionGuard],
-    data: { permissions: ['inventory:read'] },
+    canActivate: [AuthGuard],
   },
   {
     path: 'orders',
+    // canActivate: [AuthGuard, PermissionGuard],
     loadChildren: () => import('./modules/purchase-orders/purchase-orders.module').then(m => m.PurchaseOrdersModule),
-    canActivate: [AuthGuard, PermissionGuard],
-    data: { permissions: ['orders:read'] },
+    canActivate: [AuthGuard],
   },
   {
     path: 'alerts',
+    // canActivate: [AuthGuard, PermissionGuard],
     loadComponent: () => import('./modules/alerts/pages/list/alerts-list.page').then(m => m.AlertsListPage),
-    canActivate: [AuthGuard, PermissionGuard],
-    data: { permissions: ['alerts:read'] },
+    canActivate: [AuthGuard],
   },
   {
     path: 'users',
+    // canActivate: [AuthGuard, PermissionGuard],
     loadChildren: () => import('./modules/users/users.module').then(m => m.UsersModule),
-    canActivate: [AuthGuard, PermissionGuard],
-    data: { permissions: ['users:read'] },
+    canActivate: [AuthGuard],
   },
   {
     path: 'roles',
+    // canActivate: [AuthGuard, PermissionGuard],
     loadChildren: () => import('./modules/roles/roles.module').then(m => m.RolesModule),
-    canActivate: [AuthGuard, PermissionGuard],
-    data: { permissions: ['roles:read'] },
+    canActivate: [AuthGuard],
   },
   {
     path: 'pos',
+    // Punto de Ventas - Integrado con RF006/RF007
     loadChildren: () => import('./modules/pos/pos.module').then(m => m.POSModule),
-    canActivate: [AuthGuard, PermissionGuard],
-    data: { permissions: ['sales:write'] },
+    canActivate: [AuthGuard],
   },
   {
     path: 'sales',
+    // RF007 - Historial de Ventas y Reportes
     loadChildren: () => import('./modules/sales/sales.module').then(m => m.SalesModule),
-    canActivate: [AuthGuard, PermissionGuard],
-    data: { permissions: ['sales:read'] },
+    canActivate: [AuthGuard],
   },
   {
     path: 'sales-import',
+    // RF006 - Importaci��n de Ventas Externas
+    // canActivate: [AuthGuard, PermissionGuard],
     loadComponent: () => import('./pages/sales-import/sales-import.page').then(m => m.SalesImportPage),
-    canActivate: [AuthGuard, PermissionGuard],
-    data: { permissions: ['sales:import'] },
+    canActivate: [AuthGuard],
   },
   {
     path: 'reports',
+    // canActivate: [AuthGuard, PermissionGuard],
     loadComponent: () => import('./pages/reports/reports.page').then(m => m.ReportsPage),
-    canActivate: [AuthGuard, PermissionGuard],
-    data: { permissions: ['reports:read'] },
+    canActivate: [AuthGuard],
   },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 ];
@@ -70,4 +71,3 @@ const routes: Routes = [
   exports: [RouterModule],
 })
 export class AppRoutingModule {}
-

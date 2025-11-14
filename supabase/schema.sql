@@ -240,6 +240,8 @@ values
       "alerts:write",
       "reports:read",
       "reports:write",
+      "sales:read",
+      "sales:write",
       "sales:import",
       "roles:read",
       "roles:write",
@@ -250,33 +252,35 @@ values
   (
     'MANAGER',
     'Gerente',
-    'Consulta indicadores, reportes y autoriza pedidos.',
+    'Gestiona inventario, pedidos, alertas y reportes sin administrar usuarios/roles.',
     '[
       "inventory:read",
+      "inventory:write",
       "orders:read",
-      "orders:authorize",
+      "orders:write",
+      "alerts:read",
       "reports:read",
-      "kpis:view"
+      "sales:read",
+      "sales:write",
+      "sales:import"
     ]'
   ),
   (
     'WAREHOUSE',
     'Almacenista',
-    'Gestiona inventario y flujo de pedidos.',
+    'Gestiona exclusivamente los movimientos de inventario.',
     '[
       "inventory:read",
-      "inventory:write",
-      "orders:read",
-      "orders:write"
+      "inventory:write"
     ]'
   ),
   (
     'CASHIER',
     'Cajero',
-    'Consulta inventario y reporta ventas manualmente.',
+    'Opera el punto de venta e historial de ventas.',
     '[
-      "inventory:read",
-      "sales:import"
+      "sales:read",
+      "sales:write"
     ]'
   )
 on conflict (code)
