@@ -106,37 +106,46 @@ export class UsersService {
   }
 
   private async createAsync(payload: UpsertUserPayload): Promise<AppUser> {
-    const { data, error } = await supabase()
-      .from(this.table)
-      .insert({
-        full_name: payload.fullName.trim(),
-        email: payload.email.trim().toLowerCase(),
-        role_id: payload.roleId,
-        phone: payload.phone?.trim() ?? null,
-        is_active: payload.isActive ?? true,
-      })
-      .select(
-        'id, auth_user_id, full_name, email, role_id, phone, is_active, created_at, updated_at, role:roles(id, code, name, description, permissions, created_at)',
-      )
-      .single();
-
-    if (error) {
-      throw new Error(this.translateError(error.message, 'crear el usuario'));
+    const passwordValue = payload.password?.trim();
+    if (!passwordValue) {
+      throw new Error('Debes proporcionar una contraseña para el nuevo usuario.');
     }
 
-    return this.mapRow(data as unknown as AppUserRow);
+    const { data, error } = await supabase().functions.invoke('create-app-user', {
+      body: {
+        fullName: payload.fullName.trim(),
+        email: payload.email.trim().toLowerCase(),
+        password: passwordValue,
+        roleId: payload.roleId,
+        phone: payload.phone?.trim() ?? null,
+        isActive: payload.isActive ?? true,
+      },
+    });
+
+    if (error) {
+      throw new Error(this.extractFunctionError(error, data));
+    }
+
+    const row = (data?.user as AppUserRow | undefined) ?? null;
+    if (!row) {
+      throw new Error('La función de creación no devolvió el usuario creado.');
+    }
+
+    return this.mapRow(row);
   }
 
   private async updateAsync(id: string, payload: UpsertUserPayload): Promise<AppUser> {
+    const updateData: Record<string, unknown> = {
+      full_name: payload.fullName.trim(),
+      email: payload.email.trim().toLowerCase(),
+      role_id: payload.roleId,
+      phone: payload.phone?.trim() ?? null,
+      is_active: payload.isActive ?? true,
+    };
+
     const { data, error } = await supabase()
       .from(this.table)
-      .update({
-        full_name: payload.fullName.trim(),
-        email: payload.email.trim().toLowerCase(),
-        role_id: payload.roleId,
-        phone: payload.phone?.trim() ?? null,
-        is_active: payload.isActive ?? true,
-      })
+      .update(updateData)
       .eq('id', id)
       .select(
         'id, auth_user_id, full_name, email, role_id, phone, is_active, created_at, updated_at, role:roles(id, code, name, description, permissions, created_at)',
@@ -197,5 +206,17 @@ export class UsersService {
 
     return `No se pudo ${action}: ${message}`;
   }
-}
 
+  private extractFunctionError(error: any, data: unknown): string {
+    const fallback = error?.message ?? 'No se pudo crear el usuario.';
+    if (data && typeof data === 'object') {
+      const payload = data as Record<string, unknown>;
+      const message = typeof payload['message'] === 'string' ? payload['message'] : undefined;
+      const details = typeof payload['details'] === 'string' ? payload['details'] : undefined;
+      if (message) {
+        return details ? `${message} (${details})` : message;
+      }
+    }
+    return fallback;
+  }
+}

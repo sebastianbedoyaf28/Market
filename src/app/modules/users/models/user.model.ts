@@ -18,4 +18,5 @@ export interface UpsertUserPayload {
   roleId: string;
   phone?: string | null;
   isActive?: boolean;
+  password?: string | null;
 }

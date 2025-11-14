@@ -8,7 +8,7 @@ import { catchError, finalize, switchMap, takeUntil } from 'rxjs/operators';
 import { UsersService } from '../../services/users.service';
 import { RolesService } from '../../../roles/services/roles.service';
 import { Role } from '../../../roles/models/role.model';
-import { AppUser } from '../../models/user.model';
+import { AppUser, UpsertUserPayload } from '../../models/user.model';
 import { UserContextService } from '../../../../core/services/user-context.service';
 @Component({
   selector: 'app-user-form',
@@ -30,6 +30,7 @@ export class UserFormPage implements OnInit, OnDestroy {
     roleId: ['', Validators.required],
     phone: [''],
     isActive: [true],
+    password: [''],
   });
   private readonly destroy$ = new Subject<void>();
   
@@ -46,6 +47,7 @@ export class UserFormPage implements OnInit, OnDestroy {
   ) {}
   ngOnInit(): void {
     this.loadRoles();
+    this.updatePasswordValidators();
     this.userContext.currentUser$
       .pipe(takeUntil(this.destroy$))
       .subscribe(user => (this.currentUserId = user?.id ?? undefined));
@@ -57,10 +59,12 @@ export class UserFormPage implements OnInit, OnDestroy {
           if (!id || id === 'new') {
             this.isEdit = false;
             this.userId = undefined;
+            this.updatePasswordValidators();
             return of(null);
           }
           this.isEdit = true;
           this.userId = id;
+          this.updatePasswordValidators();
           this.loading = true;
           return this.usersService.getById(id).pipe(
             catchError(err => {
@@ -82,6 +86,7 @@ export class UserFormPage implements OnInit, OnDestroy {
             roleId: '',
             phone: '',
             isActive: true,
+            password: '',
           });
         }
       });
@@ -103,13 +108,17 @@ export class UserFormPage implements OnInit, OnDestroy {
     const loading = await this.loadingCtrl.create({ message: 'Guardando...' });
     await loading.present();
     this.saving = true;
-    const payload = {
+    const payload: UpsertUserPayload = {
       fullName: this.form.controls.fullName.value.trim(),
       email: this.form.controls.email.value.trim().toLowerCase(),
       roleId: this.form.controls.roleId.value,
       phone: this.form.controls.phone.value?.trim() || null,
       isActive: this.form.controls.isActive.value,
     };
+    const passwordValue = this.form.controls.password.value?.trim();
+    if (passwordValue) {
+      payload.password = passwordValue;
+    }
     const request$ = this.isEdit && this.userId
       ? this.usersService.update(this.userId, payload)
       : this.usersService.create(payload);
@@ -173,6 +182,7 @@ export class UserFormPage implements OnInit, OnDestroy {
       roleId: user.roleId,
       phone: user.phone ?? '',
       isActive: user.isActive,
+      password: '',
     });
   }
   private performDelete() {
@@ -199,5 +209,20 @@ export class UserFormPage implements OnInit, OnDestroy {
       color,
     });
     await toast.present();
+  }
+
+  private updatePasswordValidators(): void {
+    const control = this.form.controls.password;
+    if (!control) {
+      return;
+    }
+
+    if (this.isEdit) {
+      control.setValidators([]);
+      control.setValue('', { emitEvent: false });
+    } else {
+      control.setValidators([Validators.required, Validators.minLength(8)]);
+    }
+    control.updateValueAndValidity();
   }
 }
