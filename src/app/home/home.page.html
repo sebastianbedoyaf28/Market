@@ -40,7 +40,6 @@
       <div class="modules-grid" *ngIf="modules.length > 0">
         <ion-card
           class="module-card"
-          [ngClass]="{ 'module-disabled': !module.allowed }"
           *ngFor="let module of modules"
           (click)="navigateToModule(module)"
         >

@@ -184,11 +184,13 @@ export class HomePage implements OnInit, OnDestroy {
     this.modules$ = this.userContext.permissions$.pipe(
       map(permissions => {
         const owned = permissions ?? [];
-        return this.moduleCards.map(card => {
-          const required = Array.isArray(card.permissions) ? card.permissions : [card.permissions];
-          const allowed = required.every(permission => owned.includes(permission));
-          return { ...card, allowed };
-        });
+        return this.moduleCards
+          .map(card => {
+            const required = Array.isArray(card.permissions) ? card.permissions : [card.permissions];
+            const allowed = required.every(permission => owned.includes(permission));
+            return { ...card, allowed };
+          })
+          .filter(card => card.allowed);
       }),
     );
   }
@@ -714,8 +716,6 @@ export class HomePage implements OnInit, OnDestroy {
     await toast.present();
   }
 }
-
-
 
 
 
