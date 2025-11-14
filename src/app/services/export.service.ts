@@ -133,123 +133,176 @@ export class ExportService {
 
   /**
    * Obtiene datos de inventario
+   * Ahora se basa en inventory_movements + relación correcta a inventory_products
    */
-  private async getInventoryData(dateFrom?: string, dateTo?: string): Promise<any[]> {
-    let query = supabase()
-      .from('products')
-      .select(`
-        *,
-        inventory_movements!inner(
-          type,
-          quantity,
-          reason,
-          created_at,
-          notes
-        )
-      `)
-      .order('created_at', { ascending: false });
+private async getInventoryData(_dateFrom?: string, _dateTo?: string): Promise<any[]> {
+  // 1) Traer productos de inventario con sus lotes
+  const { data, error } = await supabase()
+    .from('inventory_products')
+    .select(`
+      id,
+      name,
+      sku,
+      category,
+      provider,
+      cost_price,
+      sale_price,
+      created_at,
+      inventory_lots (
+        quantity,
+        expiry_date
+      )
+    `)
+    .order('created_at', { ascending: false });
 
-    if (dateFrom) {
-      query = query.gte('inventory_movements.created_at', dateFrom);
-    }
-    if (dateTo) {
-      query = query.lte('inventory_movements.created_at', dateTo);
-    }
+  if (error) throw error;
 
-    const { data, error } = await query;
-    
-    if (error) throw error;
-
-    // Procesar datos para el reporte
-    return (data || []).map(product => {
-      const movements = Array.isArray(product.inventory_movements) 
-        ? product.inventory_movements 
-        : [product.inventory_movements];
-      
-      return movements.map((movement: any) => ({
-        'SKU': product.sku || 'N/A',
-        'Nombre del Producto': product.name,
-        'Precio': product.price,
-        'Tipo de Movimiento': movement.type === 'entrada' ? 'Entrada' : 'Salida',
-        'Cantidad': movement.quantity,
-        'Razón': this.translateReason(movement.reason),
-        'Fecha': new Date(movement.created_at).toLocaleDateString('es-ES'),
-        'Notas': movement.notes || ''
-      }));
-    }).flat();
+  const products = data || [];
+  if (products.length === 0) {
+    return [];
   }
+
+  // 2) Construir las filas del reporte
+  return products.map((p: any) => {
+    const lots = Array.isArray(p.inventory_lots)
+      ? p.inventory_lots
+      : (p.inventory_lots ? [p.inventory_lots] : []);
+
+    // Stock total
+    const totalStock = lots.reduce(
+      (sum: number, lot: any) => sum + (lot.quantity ?? 0),
+      0
+    );
+
+    // Próximo vencimiento
+    const validDates = lots
+      .map((lot: any) => lot.expiry_date ? new Date(lot.expiry_date) : null)
+      .filter((d: Date | null) => d && !Number.isNaN(d.getTime())) as Date[];
+
+    let nextExpiry = '';
+    if (validDates.length > 0) {
+      validDates.sort((a, b) => a.getTime() - b.getTime());
+      nextExpiry = validDates[0].toLocaleDateString('es-ES');
+    }
+
+    return {
+      'SKU': p.sku || 'N/A',
+      'Nombre del Producto': p.name,
+      'Categoría': p.category || 'N/A',
+      'Proveedor': p.provider || 'N/A',
+      'Stock total': totalStock,
+      'Próximo vencimiento': nextExpiry,
+      'Precio costo': p.cost_price ?? 0,
+      'Precio venta': p.sale_price ?? 0,
+      'Fecha creación producto': new Date(p.created_at).toLocaleDateString('es-ES')
+    };
+  });
+}
+
 
   /**
    * Obtiene datos de ventas
    */
-  private async getSalesData(dateFrom?: string, dateTo?: string): Promise<any[]> {
-    let query = supabase()
-      .from('sales')
-      .select(`
-        *,
-        products!inner(name, sku)
-      `)
-      .order('sale_date', { ascending: false });
+ private async getSalesData(dateFrom?: string, dateTo?: string): Promise<any[]> {
+  // 1) Traer las ventas
+  let salesQuery = supabase()
+    .from('sales')
+    .select('*')
+    .order('sale_date', { ascending: false });
 
-    if (dateFrom) {
-      query = query.gte('sale_date', dateFrom);
-    }
-    if (dateTo) {
-      query = query.lte('sale_date', dateTo);
-    }
+  if (dateFrom) {
+    salesQuery = salesQuery.gte('sale_date', dateFrom);
+  }
+  if (dateTo) {
+    salesQuery = salesQuery.lte('sale_date', dateTo);
+  }
 
-    const { data, error } = await query;
-    
-    if (error) throw error;
+  const { data: sales, error: salesError } = await salesQuery;
+  if (salesError) throw salesError;
 
-    return (data || []).map(sale => ({
+  const salesData = sales || [];
+  if (salesData.length === 0) {
+    return [];
+  }
+
+  // 2) Obtener los product_id distintos
+  const productIds = Array.from(
+    new Set(
+      salesData
+        .map((s: any) => s.product_id)
+        .filter((id: string | null) => !!id)
+    )
+  );
+
+  // 3) Traer los productos relacionados (solo columnas reales: id, name, price)
+  const productsMap = new Map<string, { id: string; name?: string; price?: number }>();
+
+  if (productIds.length > 0) {
+    const { data: products, error: productsError } = await supabase()
+      .from('products')
+      .select('id, name, price')
+      .in('id', productIds);
+
+    if (productsError) throw productsError;
+
+    (products || []).forEach((p: any) => {
+      productsMap.set(p.id, { id: p.id, name: p.name, price: p.price });
+    });
+  }
+
+  // 4) Armar las filas del reporte
+  return salesData.map((sale: any) => {
+    const product = sale.product_id ? productsMap.get(sale.product_id) : undefined;
+
+    // Usamos un "pseudo SKU" basado en el id
+    const pseudoSku = product?.id ? product.id.substring(0, 8) : 'N/A';
+
+    return {
       'Fecha de Venta': new Date(sale.sale_date).toLocaleDateString('es-ES'),
-      'SKU': sale.products?.sku || 'N/A',
-      'Producto': sale.products?.name || 'Producto eliminado',
+      'SKU': pseudoSku,
+      'Producto': product?.name || 'Producto eliminado',
       'Cantidad': sale.quantity,
-      'Precio Unitario': `$${sale.unit_price?.toFixed(2)}`,
-      'Total': `$${sale.total_price?.toFixed(2)}`,
+      'Precio Unitario': sale.unit_price != null
+        ? `$${sale.unit_price.toFixed(2)}`
+        : (product?.price != null ? `$${product.price.toFixed(2)}` : 'N/A'),
+      'Total': sale.total_price != null ? `$${sale.total_price.toFixed(2)}` : 'N/A',
       'Cliente': sale.customer_name || 'N/A',
       'Factura': sale.invoice_number || 'N/A',
       'Origen': this.translateImportSource(sale.import_source),
       'Fecha Registro': new Date(sale.created_at).toLocaleDateString('es-ES')
-    }));
-  }
+    };
+  });
+}
+
 
   /**
    * Obtiene datos de pedidos
    */
-  private async getOrdersData(dateFrom?: string, dateTo?: string): Promise<any[]> {
-    let query = supabase()
-      .from('purchase_orders')
-      .select(`
-        *,
-        suppliers!inner(name),
-        purchase_order_items!inner(
-          quantity_ordered,
-          quantity_received,
-          unit_cost,
-          inventory_products!inner(name)
-        )
-      `)
-      .order('created_at', { ascending: false });
+  private async getOrdersData(_dateFrom?: string, _dateTo?: string): Promise<any[]> {
+  const { data, error } = await supabase()
+    .from('purchase_orders')
+    .select(`
+      *,
+      suppliers!inner(name),
+      purchase_order_items!inner(
+        quantity_ordered,
+        quantity_received,
+        unit_cost,
+        inventory_products!inner(name)
+      )
+    `)
+    .order('created_at', { ascending: false });
 
-    if (dateFrom) {
-      query = query.gte('created_at', dateFrom);
-    }
-    if (dateTo) {
-      query = query.lte('created_at', dateTo);
-    }
+  if (error) throw error;
 
-    const { data, error } = await query;
-    
-    if (error) throw error;
+  const orders = data || [];
 
-    return (data || []).map(order => {
-      const items = Array.isArray(order.purchase_order_items) 
-        ? order.purchase_order_items 
-        : [order.purchase_order_items];
-      
+  return orders
+    .map(order => {
+      const items = Array.isArray(order.purchase_order_items)
+        ? order.purchase_order_items
+        : (order.purchase_order_items ? [order.purchase_order_items] : []);
+
       return items.map((item: any) => ({
         'Número de Pedido': order.id.substring(0, 8),
         'Proveedor': order.suppliers?.name || 'N/A',
@@ -257,13 +310,16 @@ export class ExportService {
         'Producto': item.inventory_products?.name || 'N/A',
         'Cantidad Pedida': item.quantity_ordered,
         'Cantidad Recibida': item.quantity_received,
-        'Costo Unitario': item.unit_cost ? `$${item.unit_cost.toFixed(2)}` : 'N/A',
-        'Total': item.unit_cost ? `$${(item.quantity_ordered * item.unit_cost).toFixed(2)}` : 'N/A',
+        'Costo Unitario': item.unit_cost != null ? `$${item.unit_cost.toFixed(2)}` : 'N/A',
+        'Total': item.unit_cost != null
+          ? `$${(item.quantity_ordered * item.unit_cost).toFixed(2)}`
+          : 'N/A',
         'Fecha Esperada': new Date(order.expected_date).toLocaleDateString('es-ES'),
         'Fecha Creación': new Date(order.created_at).toLocaleDateString('es-ES')
       }));
-    }).flat();
-  }
+    })
+    .flat();
+}
 
   /**
    * Exporta datos a CSV
@@ -421,14 +477,15 @@ export class ExportService {
 
   /**
    * Traduce razones de movimiento de inventario
+   * (valores reales en BD: purchase | sale | adjustment | waste | initial)
    */
   private translateReason(reason: string): string {
     const translations: { [key: string]: string } = {
-      'compra': 'Compra',
-      'venta': 'Venta',
-      'ajuste': 'Ajuste',
-      'merma': 'Merma',
-      'inicial': 'Stock Inicial'
+      'purchase': 'Compra',
+      'sale': 'Venta',
+      'adjustment': 'Ajuste',
+      'waste': 'Merma',
+      'initial': 'Stock inicial'
     };
     return translations[reason] || reason;
   }
